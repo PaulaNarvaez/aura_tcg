@@ -25,11 +25,11 @@ async function serve(t, options = {}) {
 }
 
 async function staticFixture(t) {
-  const root = await mkdtemp(join(tmpdir(), 'pokenova-http-'));
+  const root = await mkdtemp(join(tmpdir(), 'aura-http-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const distDir = join(root, 'dist');
   await mkdir(join(distDir, 'assets'), { recursive: true });
-  await writeFile(join(distDir, 'index.html'), '<!doctype html><html><body>Pokénova de prueba</body></html>');
+  await writeFile(join(distDir, 'index.html'), '<!doctype html><html><body>Aura de prueba</body></html>');
   await writeFile(join(distDir, 'assets', 'app.js'), 'console.log("archivo público");');
   await writeFile(join(distDir, 'assets', 'style.css'), 'body { color: green; }');
   await writeFile(join(root, 'private.txt'), 'PRIVATE_DATABASE_PASSWORD_FOR_TEST');
@@ -96,7 +96,7 @@ test('unknown API routes remain JSON 404 responses rather than receiving the Rea
   const response = await fetch(`${base}/api/not-a-route`);
   assert.equal(response.status, 404);
   assert.match(response.headers.get('content-type'), /application\/json/);
-  assert.doesNotMatch(await response.text(), /<!doctype|Pokénova de prueba/);
+  assert.doesNotMatch(await response.text(), /<!doctype|Aura de prueba/);
 });
 
 test('production files support GET and HEAD with their browser MIME types', async t => {
@@ -105,7 +105,7 @@ test('production files support GET and HEAD with their browser MIME types', asyn
   const index = await fetch(base);
   assert.equal(index.status, 200);
   assert.match(index.headers.get('content-type'), /text\/html/);
-  assert.match(await index.text(), /Pokénova de prueba/);
+  assert.match(await index.text(), /Aura de prueba/);
   const script = await fetch(`${base}/assets/app.js`);
   assert.equal(script.status, 200);
   assert.match(script.headers.get('content-type'), /(?:application|text)\/javascript/);

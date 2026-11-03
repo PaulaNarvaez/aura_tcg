@@ -1,7 +1,7 @@
 # Preparación para publicar más adelante; este archivo no crea servicios por sí solo.
 services:
   - type: web
-    name: pokenova-tcg
+    name: aura-tcg-print
     runtime: node
     plan: free
     buildCommand: npm ci --include=dev && npm run build

@@ -1,6 +1,6 @@
-# ⚡ Pokénova TCG
+# ⚡ Aura TCG & Print
 
-Estoy creando Pokénova TCG para reunir productos Pokémon e impresiones 3D a medida: cajas, organizadores y soportes pensados para las cartas de cada colección, con atención por WhatsApp.
+Estoy creando Aura TCG & Print para reunir productos Pokémon e impresiones 3D a medida: cajas, organizadores y soportes pensados para las cartas de cada colección, con atención por WhatsApp.
 
 ## 🛠️ Cómo la estoy construyendo
 

@@ -16,7 +16,7 @@ export default function Buyback() {
           <div className="buyback-option-copy">
           <h3>Challa y cartas sueltas</h3>
           <p>Lotes de cartas Pokémon y cartas individuales de distintas expansiones. Cuéntanos cuántas tienes y en qué estado están.</p>
-          <a className="text-link" href={whatsappUrl('¡Hola, Pokenova! Quiero venderles challa o cartas Pokémon sueltas. Les enviaré fotos, cantidades y detalles del estado para consultar una oferta.')} target="_blank" rel="noreferrer">Vender mi challa <span><ArrowUpRight size={17} /></span></a>
+          <a className="text-link" href={whatsappUrl('¡Hola, Aura! Quiero venderles challa o cartas Pokémon sueltas. Les enviaré fotos, cantidades y detalles del estado para consultar una oferta.')} target="_blank" rel="noreferrer">Vender mi challa <span><ArrowUpRight size={17} /></span></a>
           </div>
         </article>
         <article className="buyback-option">
@@ -24,7 +24,7 @@ export default function Buyback() {
           <div className="buyback-option-copy">
           <h3>Productos sellados</h3>
           <p>Sobres, ETB, cajas y colecciones sin abrir. Envíanos fotos de los sellos y el nombre de cada producto.</p>
-          <a className="text-link" href={whatsappUrl('¡Hola, Pokenova! Quiero ofrecerles productos Pokémon sellados. Les enviaré fotos de los productos y sus sellos, cantidades y ediciones para consultar una oferta.')} target="_blank" rel="noreferrer">Ofrecer productos sellados <span><ArrowUpRight size={17} /></span></a>
+          <a className="text-link" href={whatsappUrl('¡Hola, Aura! Quiero ofrecerles productos Pokémon sellados. Les enviaré fotos de los productos y sus sellos, cantidades y ediciones para consultar una oferta.')} target="_blank" rel="noreferrer">Ofrecer productos sellados <span><ArrowUpRight size={17} /></span></a>
           </div>
         </article>
         <p className="buyback-footnote">Cada oferta se revisa según los productos, su cantidad y su estado. Escríbenos para conversar los detalles.</p>

@@ -90,6 +90,33 @@
       "sha256": "26b69deb6c36b8a41c57edddeaa1de54d206d72960b4c3ec2a449ada89926c59",
       "description": "Pikachu, Silver Tempest, 049/195",
       "note": "Artwork belongs to its respective Pokémon rights holders. Character renders are illustrations, not product photography."
+    },
+    {
+      "file": "lucario-hero.png",
+      "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/448.png",
+      "format": "PNG",
+      "bytes": 103778,
+      "sha256": "4c034a663b3110274605a3d3b8d212fe1380c1d147998e6c0e181382424454d3",
+      "description": "Lucario, Pokémon HOME character render shared through PokeAPI sprites",
+      "note": "Character illustration, not product photography. Artwork belongs to its respective Pokémon rights holders."
+    },
+    {
+      "file": "lucario.png",
+      "source": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/448.png",
+      "format": "PNG",
+      "bytes": 91289,
+      "sha256": "8c5064f1d4a37c8b554d7ad83d77970b02d6875750f934c782493c83f8943127",
+      "description": "Lucario official character illustration shared through PokeAPI sprites",
+      "note": "Character illustration, not product photography. Artwork belongs to its respective Pokémon rights holders."
+    },
+    {
+      "file": "aura-logo.png",
+      "source": "User-provided Aura TCG & Print logo, prepared as a transparent web asset with image generation",
+      "format": "PNG",
+      "bytes": 976457,
+      "sha256": "a4de40d746fb106bb3017563b7c17636bf77ab80306afb564fade262946bf703",
+      "description": "Aura TCG & Print galaxy logo supplied by the user",
+      "note": "Brand artwork supplied by the user."
     }
   ],
   "unavailable_product_photography": [

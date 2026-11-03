@@ -70,7 +70,7 @@ export default function CustomPrints() {
     dimensions.depth && `Fondo: ${dimensions.depth} mm`,
   ].filter(Boolean);
   const message = [
-    '¡Hola, Pokénova! Quiero cotizar una impresión 3D a medida.',
+    '¡Hola, Aura! Quiero cotizar una impresión 3D a medida.',
     `Tipo: ${selectedService.name}`,
     `Formato de mi colección: ${format}`,
     dimensionDetails.length ? `Medidas orientativas: ${dimensionDetails.join(', ')}` : 'Medidas por confirmar.',
@@ -139,7 +139,7 @@ export default function CustomPrints() {
         </fieldset>
         <div className="custom-prints-field">
           <label htmlFor={`${formId}-color`}>Color o combinación (opcional)</label>
-          <input id={`${formId}-color`} type="text" maxLength="80" value={color} placeholder="Por ejemplo: amarillo y negro" onChange={event => setColor(event.target.value)} />
+          <input id={`${formId}-color`} type="text" maxLength="80" value={color} placeholder="Por ejemplo: azul y violeta" onChange={event => setColor(event.target.value)} />
         </div>
         <div className="custom-prints-field">
           <label htmlFor={`${formId}-idea`}>Tu idea (obligatorio)</label>

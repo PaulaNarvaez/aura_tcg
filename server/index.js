@@ -115,7 +115,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
       console.error('No pudimos iniciar el servidor. Revisa el puerto y vuelve a intentarlo.');
       process.exitCode = 1;
     });
-    server.listen(port, '0.0.0.0', () => console.log(`Pokénova: servidor iniciado en el puerto ${port}.`));
+    server.listen(port, '0.0.0.0', () => console.log(`Aura: servidor iniciado en el puerto ${port}.`));
     for (const signal of ['SIGTERM', 'SIGINT']) {
       process.once(signal, () => server.close(() => { process.exitCode = 0; }));
     }

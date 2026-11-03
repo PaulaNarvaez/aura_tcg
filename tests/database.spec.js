@@ -71,7 +71,7 @@ test('waits for remote inventory before restoring the saved cart and preserves r
   release();
 
   await expect(page.locator('.product-card')).toHaveCount(2);
-  await expect(page.locator('.catalog-label')).toHaveText('CATÁLOGO POKÉNOVA');
+  await expect(page.locator('.catalog-label')).toHaveText('CATÁLOGO AURA');
   await expect(page.locator('#catalogo')).not.toContainText(/de ejemplo|catálogo de muestra/i);
   await expect.poll(() => storedCart(page)).toEqual([{ productId: card.id, quantity: 2 }]);
   await expect(productCard(page, card).getByRole('img', { name: card.name, exact: true })).toHaveAttribute('src', card.image);
@@ -114,7 +114,7 @@ test('an API failure keeps the saved cart intact, and retry reconciles it after 
 test('an empty published inventory stays empty and does not fall back to demonstration products', async ({ page, context }) => {
   await context.route(api, route => route.fulfill({ json: [] }));
   await page.goto('/');
-  await expect(page.locator('.catalog-label')).toHaveText('CATÁLOGO POKÉNOVA');
+  await expect(page.locator('.catalog-label')).toHaveText('CATÁLOGO AURA');
   await expect(page.locator('.empty-search')).toBeVisible();
   await expect(page.locator('.product-card')).toHaveCount(0);
   await expect(page.locator('#catalogo')).not.toContainText(/de ejemplo|catálogo de muestra|No pudimos cargar/i);

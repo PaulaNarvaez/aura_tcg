@@ -1,4 +1,4 @@
-# Manual de edición de Pokénova TCG
+# Manual de edición de Aura TCG & Print
 
 Esta guía explica cómo mantener la tienda: agregar productos, cambiar fotos y precios, editar textos y publicar los cambios.
 
@@ -48,7 +48,7 @@ Si un dato está por definir, indícalo. Los precios y existencias de ejemplo no
 | Textos y mensajes de la sección de compra de challa y sellados | `src/Buyback.jsx` |
 | Servicios y formulario de cotización de impresión 3D a medida | `src/CustomPrints.jsx` |
 | Colores, tamaños, tarjetas, fondo y animaciones | `src/styles.css` |
-| Símbolo del logo e icono de la pestaña | `public/favicon.svg` |
+| Logo de Aura e icono de la pestaña | Logo en `public/images/`; icono en `public/favicon.svg` |
 | Título de la pestaña y descripción para buscadores | `index.html` |
 | Preparación de la publicación con Neon y Node | `render.yaml` y [guía](database/README.md) |
 | Publicación estática de muestra | `.github/workflows/pages.yml` |
@@ -205,7 +205,7 @@ En el catálogo: image: '/images/peluche-eevee-real.jpg'
 
 Respeta exactamente el nombre y la extensión del archivo: GitHub Pages distingue mayúsculas de minúsculas. En el campo `image`, no agregues `public/` ni una ruta de tu computador.
 
-Usa un archivo nuevo para cada foto real de producto. Algunas imágenes actuales, como `pikachu.png`, se comparten entre varios productos y partes de la portada; reemplazarlas cambiaría todos esos lugares.
+Usa un archivo nuevo para cada foto real de producto. Algunas imágenes actuales, como `pikachu.png`, se comparten entre varios productos y recursos de la página; reemplazarlas cambiaría todos esos lugares.
 
 Cada producto muestra una foto principal. Si envías varias, indica cuál quieres destacar; una galería de fotos requeriría una ampliación de la ficha. Si dejas `image: null`, aparece una ilustración conceptual en lugar de una fotografía.
 
@@ -243,22 +243,24 @@ El nombre visible de la marca está escrito en `src/App.jsx`. Cambiar únicament
 
 En `index.html`, cambia el texto entre `<title>` y `</title>` para editar el título de la pestaña. La etiqueta `meta` con `name="description"` contiene la descripción para buscadores.
 
-El símbolo que aparece en el encabezado, el pie y la pestaña sale del mismo archivo: `public/favicon.svg`. Si me envías un logo nuevo, puedo prepararlo para esos tres lugares.
+El logo de Aura está en `public/images/aura-logo.png`: el encabezado muestra su nombre y el pie conserva la composición completa. El icono de la pestaña está en `public/favicon.svg` y utiliza la carta con engranajes de la marca. La portada utiliza `public/images/lucario-hero.png`, con tonos azules y violetas.
 
-Si el navegador conserva el icono anterior, recarga con **Ctrl + F5** y vuelve a abrir la pestaña. La referencia del icono lleva `?version=2`; si hace falta actualizar esa versión, debe cambiarse tanto en `index.html` como en las imágenes del logo en `src/App.jsx`.
+Si el navegador conserva el icono anterior, recarga con **Ctrl + F5** y vuelve a abrir la pestaña. Si hace falta actualizar la versión del icono, cambia su referencia en `index.html`. Las referencias al logo y a la imagen de Lucario están en `src/App.jsx`.
 
 ## 7. Colores, fondo y diseño adaptable
 
 Los estilos están en `src/styles.css`. Los colores principales se declaran al comienzo, dentro de `:root`:
 
 ```css
---ink: #17382e;
---paper: #faf9f5;
---yellow: #ffe15b;
---blue: #3158d4;
+--ink: #252342;
+--paper: #fcfbff;
+--accent: #dce6ff;
+--blue: #6451d8;
+--cyan: #6bd9eb;
+--pink: #d9a0db;
 ```
 
-`ink` corresponde al verde oscuro, `paper` al fondo claro, `yellow` al amarillo y `blue` al azul. Algunos bloques tienen colores propios, como `.hero-art` y `.tone-yellow`; un cambio de paleta completo debe revisar también esos estilos.
+`ink` corresponde al índigo del texto, `paper` al fondo blanco lavanda y `accent` al azul suave. `blue`, `cyan` y `pink` aportan los tonos violeta, cian y rosa del logo. Algunos bloques tienen colores propios, como `.hero-art` y las tarjetas del catálogo; un cambio de paleta completo debe revisar también esos estilos.
 
 El fondo animado utiliza `.animated-background` y `.background-orb` para los colores suaves, y `.background-glint` para los brillitos. Su posición, tamaño y ritmo se definen en `backgroundGlints`, al comienzo de `src/App.jsx`; sus formas y animaciones están en `src/styles.css`. Las reglas al final para `prefers-reduced-motion` respetan la preferencia de quienes necesitan menos movimiento.
 

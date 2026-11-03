@@ -1,10 +1,10 @@
-# Conectar Pokénova a Neon 🐘
+# Conectar Aura a Neon 🐘
 
 Neon guarda los productos, precios y existencias en una base de datos PostgreSQL. La página los consulta a través de una API de Node.js: el navegador nunca recibe la contraseña de conexión.
 
 ```mermaid
 flowchart LR
-    pagina["🛍️ Página de Pokénova"] --> api["API de Node.js"]
+    pagina["🛍️ Página de Aura"] --> api["API de Node.js"]
     api --> datos[("🐘 PostgreSQL en Neon")]
 ```
 
@@ -12,7 +12,7 @@ El código está preparado, pero todavía necesitas crear el proyecto y configur
 
 ## 1. Crear la base de datos
 
-1. Entra en [Neon](https://neon.com/) y crea un proyecto para Pokénova.
+1. Entra en [Neon](https://neon.com/) y crea un proyecto para Aura.
 2. Puedes comenzar con el plan gratuito para las pruebas. Revisa sus límites vigentes de almacenamiento y uso en tu cuenta antes de publicar o aumentar el catálogo.
 3. Abre el **SQL Editor**, selecciona la base de datos del proyecto y ejecuta una sola vez el contenido completo de [schema.sql](schema.sql).
 4. Comprueba que existe la tabla `public.products`.

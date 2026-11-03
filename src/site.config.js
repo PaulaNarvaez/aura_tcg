@@ -1,5 +1,5 @@
 export const store = {
-  name: 'Pokenova TCG',
+  name: 'Aura TCG & Print',
   whatsapp: '56998716582',
   currency: 'CLP',
   locale: 'es-CL',

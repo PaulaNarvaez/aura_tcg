@@ -77,6 +77,15 @@ async function screenshot(page, path) {
 test('desktop browsing, product details, persistent cart, and clearing a consulted order', async ({ page, context }) => {
   await stubWhatsapp(context);
   await page.goto('/');
+  await expect(page).toHaveTitle(/Aura TCG & Print/);
+  const logos = page.locator('img.brand-logo');
+  await expect(logos).toHaveCount(2);
+  for (const logo of await logos.all()) {
+    await expect.poll(() => logo.evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
+  }
+  const mascot = page.locator('.hero-mascot');
+  await expect(mascot).toHaveAttribute('src', /lucario-hero\.png$/);
+  await expect.poll(() => mascot.evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/\S/);
   await expect(page.locator('.product-card')).toHaveCount(products.length);
@@ -125,7 +134,7 @@ test('desktop browsing, product details, persistent cart, and clearing a consult
   if (!cartProduct) {
     await expectNoAvailableProducts(page);
     await page.keyboard.press('Escape');
-    await screenshot(page, '/tmp/pokenova-desktop.png');
+    await screenshot(page, '/tmp/aura-desktop.png');
     return;
   }
   const quantity = Math.min(2, cartProduct.stock);
@@ -175,7 +184,7 @@ test('desktop browsing, product details, persistent cart, and clearing a consult
   await page.reload();
   await expectEmptyCart(page);
   await page.keyboard.press('Escape');
-  await screenshot(page, '/tmp/pokenova-desktop.png');
+  await screenshot(page, '/tmp/aura-desktop.png');
 });
 
 test('mobile navigation, cart, and page width', async ({ page }) => {
@@ -213,7 +222,7 @@ test('mobile navigation, cart, and page width', async ({ page }) => {
   expect(cartBounds.x).toBeGreaterThanOrEqual(0);
   expect(cartBounds.x + cartBounds.width).toBeLessThanOrEqual(390);
   await page.keyboard.press('Escape');
-  await screenshot(page, '/tmp/pokenova-mobile.png');
+  await screenshot(page, '/tmp/aura-mobile.png');
 });
 
 test('consulting one product clears only that product and preserves other available cart items', async ({ page, context }) => {
@@ -400,7 +409,7 @@ test('a blocked localStorage getter still allows a usable in-memory cart', async
 test('decorative sparkles animate without obstructing controls and respect reduced motion', async ({ page }) => {
   await page.goto('/');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await expect.poll(() => page.locator('.hero-pikachu').evaluate(el => getComputedStyle(el).animationName)).toBe('floating');
+  await expect.poll(() => page.locator('.hero-mascot').evaluate(el => getComputedStyle(el).animationName)).toBe('floating');
   await expect.poll(() => page.locator('.ticker > div').evaluate(el => getComputedStyle(el).animationName)).toBe('marquee');
   await expect.poll(() => page.locator('.background-orb').first().evaluate(el => getComputedStyle(el).animationName)).toBe('backgroundDrift');
   await expect.poll(() => page.locator('.background-spark').first().evaluate(el => getComputedStyle(el).animationName)).toBe('backgroundTwinkle');
@@ -418,7 +427,7 @@ test('decorative sparkles animate without obstructing controls and respect reduc
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const motion = await page.evaluate(() => ({
     scroll: getComputedStyle(document.documentElement).scrollBehavior,
-    animations: ['.hero-pikachu', '.ticker > div', '.hero-spark', '.wave', '.chat-emoji', '.background-orb', '.background-spark', '.background-glint']
+    animations: ['.hero-mascot', '.ticker > div', '.hero-spark', '.wave', '.chat-emoji', '.background-orb', '.background-spark', '.background-glint']
       .map(selector => getComputedStyle(document.querySelector(selector)).animationName),
   }));
   expect(motion.scroll).toBe('auto');
@@ -500,17 +509,16 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       await nav.getByRole('link', { name: 'Impresión 3D', exact: true }).click();
       await expect(nav).not.toBeVisible();
     }
-    const logo = page.locator('header .brand img.brand-symbol');
+    const logo = page.locator('header .brand img.brand-logo');
     await expect(logo).toBeVisible();
     expect(await logo.evaluate(image => image.naturalWidth)).toBeGreaterThan(0);
     const faviconHref = await page.locator('link[rel="icon"]').getAttribute('href');
-    const logoSrc = await logo.getAttribute('src');
-    const normalizePath = value => {
-      const url = new URL(value, page.url());
-      return `${url.origin}${url.pathname}`;
-    };
-    expect(normalizePath(logoSrc)).toBe(normalizePath(faviconHref));
+    const faviconUrl = new URL(faviconHref, page.url());
+    expect(faviconUrl.origin).toBe(new URL(page.url()).origin);
+    const favicon = await page.request.get(faviconUrl.href);
+    expect(favicon.ok()).toBe(true);
+    expect(favicon.headers()['content-type']).toMatch(/^image\//);
     await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
-    await page.screenshot({ path: `/tmp/pokenova-refresh-${width}.png`, fullPage: true, animations: 'disabled' });
+    await page.screenshot({ path: `/tmp/aura-refresh-${width}.png`, fullPage: true, animations: 'disabled' });
   });
 }
