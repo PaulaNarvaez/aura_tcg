@@ -1,12 +1,14 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { ArrowDown, ArrowRight, Box, ArrowUpRight, Check, ChevronDown, Heart, Menu, MessageCircle, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, Star, Trash2, X, Zap } from 'lucide-react';
-import { categories, filterProducts, formatPrice, products } from './catalog.js';
+import { categories, filterProducts, formatPrice, products as demoProducts } from './catalog.js';
+import { hasSupabaseConfig, imageUrl, loadProducts } from './catalog-source.js';
 import { addToCart, getCartCount, getCartSubtotal, readCart, removeFromCart, saveCart, updateQuantity } from './cart.js';
 import { whatsappUrl } from './site.config.js';
 import Buyback from './Buyback.jsx';
 import CustomPrints from './CustomPrints.jsx';
 
-const imagePath = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+const imagePath = (path) => imageUrl(path, import.meta.env.BASE_URL);
+const usesDatabase = hasSupabaseConfig(import.meta.env);
 const backgroundGlints = Array.from({ length: 24 }, (_, index) => ({
   id: index,
   style: {
@@ -68,9 +70,18 @@ function Dialog({ children, onClose, title, className = '' }) {
 }
 
 export default function App() {
-  const [cart, setCart] = useState(() => readCart(getLocalStorage(), products));
+  const [catalog, setCatalog] = useState(() => ({
+    status: usesDatabase ? 'loading' : 'ready',
+    products: usesDatabase ? [] : demoProducts,
+  }));
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const products = catalog.products;
+  const catalogReady = catalog.status === 'ready';
+  const isDemo = !usesDatabase;
+  const [cart, setCart] = useState(() => usesDatabase ? [] : readCart(getLocalStorage(), demoProducts));
   const [cartOpen, setCartOpen] = useState(false);
-  const [selected, setSelected] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const selected = products.find(product => product.id === selectedId) ?? null;
   const [category, setCategory] = useState('all');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('featured');
@@ -81,7 +92,33 @@ export default function App() {
   const subtotal = getCartSubtotal(cart, products);
   const filtered = filterProducts(products, { category, query, sort });
 
-  useEffect(() => { saveCart(getLocalStorage(), cart); }, [cart]);
+  useEffect(() => {
+    if (!usesDatabase) return;
+    const controller = new AbortController();
+    let cancelled = false;
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    setCatalog({ status: 'loading', products: [] });
+    loadProducts({
+      url: import.meta.env.VITE_SUPABASE_URL,
+      key: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      signal: controller.signal,
+    }).then(items => {
+      if (cancelled) return;
+      // Restore against the current stock only after the database has loaded.
+      setCart(readCart(getLocalStorage(), items));
+      setCatalog({ status: 'ready', products: items });
+    }).catch(() => {
+      if (!cancelled) setCatalog({ status: 'error', products: [] });
+    }).finally(() => clearTimeout(timeout));
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [loadAttempt]);
+  useEffect(() => {
+    if (catalogReady) saveCart(getLocalStorage(), cart);
+  }, [cart, catalogReady]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(null), 3200);
@@ -100,11 +137,11 @@ export default function App() {
     const next = productId ? removeFromCart(cart, productId) : [];
     saveCart(getLocalStorage(), next);
     setCart(next);
-    setSelected(null);
+    setSelectedId(null);
     setCartOpen(false);
     setToast(null);
   };
-  const orderMessage = `¡Hola, Pokenova! Quiero consultar disponibilidad y precios de estos productos:\n\n${cart.map(item => { const product = products.find(p => p.id === item.productId); return `${item.quantity} × ${product.name} (${formatPrice(product.price)} c/u, valor de ejemplo)`; }).join('\n')}\n\nTotal de ejemplo: ${formatPrice(subtotal)} CLP. ¿Me confirman el valor final y el envío?`;
+  const orderMessage = `¡Hola, Pokenova! Quiero consultar disponibilidad y precios de estos productos:\n\n${cart.flatMap(item => { const product = products.find(p => p.id === item.productId); return product ? [`${item.quantity} × ${product.name} (${formatPrice(product.price)} c/u${isDemo ? ', valor de ejemplo' : ''})`] : []; }).join('\n')}\n\n${isDemo ? 'Total de ejemplo' : 'Subtotal'}: ${formatPrice(subtotal)} CLP. ¿Me confirman el valor final y el envío?`;
 
   return <>
     <div className="animated-background" aria-hidden="true">
@@ -125,7 +162,7 @@ export default function App() {
         </nav>
         <div className="nav-actions">
           <button className="icon-button search-nav" aria-label="Buscar productos" onClick={() => { document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); searchRef.current?.focus({ preventScroll: true }); }}><Search size={21} /></button>
-          <button className="cart-button" onClick={() => setCartOpen(true)} aria-label={`Abrir carrito, ${count} productos`}><ShoppingBag size={19} /><span>Mi carrito</span><b>{count}</b></button>
+          <button className="cart-button" onClick={() => setCartOpen(true)} disabled={!catalogReady} aria-label={`Abrir carrito, ${count} productos`}><ShoppingBag size={19} /><span>Mi carrito</span><b>{count}</b></button>
           <button className="icon-button mobile-menu" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
         </div>
       </div>
@@ -165,18 +202,20 @@ export default function App() {
       <CustomPrints />
 
       <section className="catalog-section container" id="catalogo" aria-labelledby="catalog-title">
-        <div className="section-intro"><div><span className="eyebrow"><Sparkles size={14} /> EXPLORA NUESTRO CATÁLOGO POKÉMON</span><h2 id="catalog-title">Pokémon para tu colección<span className="heading-dot">.</span></h2></div><span className="catalog-label">CATÁLOGO DE MUESTRA</span></div>
-        <p className="demo-notice">Estamos preparando la tienda. Precios y existencias de ejemplo, con imágenes referenciales; consulta los valores vigentes por WhatsApp.</p>
+        <div className="section-intro"><div><span className="eyebrow"><Sparkles size={14} /> EXPLORA NUESTRO CATÁLOGO POKÉMON</span><h2 id="catalog-title">Pokémon para tu colección<span className="heading-dot">.</span></h2></div><span className="catalog-label">{isDemo ? 'CATÁLOGO DE MUESTRA' : 'CATÁLOGO POKÉNOVA'}</span></div>
+        <p className="demo-notice">{isDemo ? 'Estamos preparando la tienda. Precios y existencias de ejemplo, con imágenes referenciales; consulta los valores vigentes por WhatsApp.' : 'Consulta la disponibilidad, el valor final y el envío por WhatsApp.'}</p>
         <div className="catalog-controls"><div className="filter-tabs" aria-label="Categorías de productos">{categories.map(item => <button key={item.id} onClick={() => setCategory(item.id)} aria-pressed={category === item.id} className={category === item.id ? 'active' : ''}>{item.label}</button>)}</div><div className="search-sort"><label className="search-field"><Search size={17} /><input ref={searchRef} type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Busca tu favorito" aria-label="Buscar en el catálogo" /></label><label className="sort-field"><span className="sr-only">Ordenar productos</span><select value={sort} onChange={e => setSort(e.target.value)}><option value="featured">Destacados</option><option value="price-asc">Menor precio</option><option value="price-desc">Mayor precio</option></select><ChevronDown size={14} /></label></div></div>
-        <p className="result-count" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'favorito por descubrir' : 'favoritos por descubrir'}</p>
-        <div className="product-grid">{filtered.map(product => <article className="product-card" key={product.id}>
-          <button className={`product-image tone-${product.tone}`} onClick={() => setSelected(product)} aria-label={`Ver detalles de ${product.name}`}>
+        {catalog.status === 'loading' && <div className="catalog-status" role="status"><Sparkles size={25} /><p>Cargando productos…</p></div>}
+        {catalog.status === 'error' && <div className="catalog-status" role="alert"><p>No pudimos cargar el catálogo.</p><span>Puedes intentarlo otra vez o consultar los productos por WhatsApp.</span><button className="button button-dark" onClick={() => setLoadAttempt(attempt => attempt + 1)}>Reintentar <ArrowRight size={16} /></button></div>}
+        {catalogReady && <p className="result-count" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'favorito por descubrir' : 'favoritos por descubrir'}</p>}
+        <div className="product-grid" aria-busy={catalog.status === 'loading'}>{filtered.map(product => <article className="product-card" key={product.id}>
+          <button className={`product-image tone-${product.tone}`} onClick={() => setSelectedId(product.id)} aria-label={`Ver detalles de ${product.name}`}>
             {product.badge && <span className="product-badge">{product.badge === 'Favorito' && <Star size={11} fill="currentColor" />} {product.badge}</span>}
             <ProductArt product={product} /><span className="view-product">Ver de cerca <ArrowUpRight size={14} /></span>
           </button>
-          <div className="product-info"><span className="product-category">{product.categoryLabel}</span><button className="product-name" onClick={() => setSelected(product)}>{product.name}</button><div className="product-bottom"><div><strong>{formatPrice(product.price)} <small>CLP</small></strong><span>Precio de ejemplo</span></div><button className="add-button" onClick={() => add(product)} aria-label={`Agregar ${product.name} al carrito`}><Plus size={20} /></button></div></div>
+          <div className="product-info"><span className="product-category">{product.categoryLabel}</span><button className="product-name" onClick={() => setSelectedId(product.id)}>{product.name}</button><div className="product-bottom"><div><strong>{formatPrice(product.price)} <small>CLP</small></strong><span>{product.stock === 0 ? 'Agotado' : isDemo ? 'Precio de ejemplo' : 'Precio en CLP'}</span></div><button className="add-button" onClick={() => add(product)} disabled={product.stock === 0} aria-label={`Agregar ${product.name} al carrito`}><Plus size={20} /></button></div></div>
         </article>)}</div>
-        {filtered.length === 0 && <div className="empty-search"><Search size={32} /><h3>Ese Pokémon se nos escondió.</h3><p>Prueba otra búsqueda o explora todas las categorías.</p><button className="button button-dark" onClick={() => { setQuery(''); setCategory('all'); }}>Ver todos los productos <ArrowRight size={16} /></button></div>}
+        {catalogReady && filtered.length === 0 && <div className="empty-search"><Search size={32} /><h3>{products.length === 0 ? 'Estamos preparando nuevos productos.' : 'Ese Pokémon se nos escondió.'}</h3><p>{products.length === 0 ? 'Mientras tanto, puedes consultar por WhatsApp o cotizar una impresión 3D.' : 'Prueba otra búsqueda o explora todas las categorías.'}</p>{products.length > 0 && <button className="button button-dark" onClick={() => { setQuery(''); setCategory('all'); }}>Ver todos los productos <ArrowRight size={16} /></button>}</div>}
         <div className="catalog-bottom"><span><MessageCircle size={17} /> ¿Quieres un accesorio con tus medidas? Cuéntanos tu idea.</span><a href={whatsappUrl('¡Hola, Pokenova! Quisiera consultar por un producto Pokémon o un accesorio de impresión 3D a medida.')} target="_blank" rel="noreferrer">Hablemos por WhatsApp <ArrowUpRight size={17} /></a></div>
       </section>
 
@@ -194,11 +233,11 @@ export default function App() {
     <a className="floating-whatsapp" href={whatsappUrl('¡Hola, Pokenova! Quisiera consultar por Pokémon o impresión 3D a medida.')} target="_blank" rel="noreferrer" aria-label="Consultar precios por WhatsApp"><MessageCircle size={25} /><span>¿Hablamos?</span><span className="whatsapp-dot" /></a>
     <div className={toast ? 'toast visible' : 'toast'} role="status" aria-live="polite">{toast && <><span><Check size={17} /></span>{toast.message}<button className="icon-button" aria-label="Cerrar aviso" onClick={() => setToast(null)}><X size={16} /></button></>}</div>
 
-    {selected && <Dialog onClose={() => setSelected(null)} title="Un favorito de cerca" className="product-dialog"><div className={`detail-art tone-${selected.tone}`}><ProductArt product={selected} /></div><span className="eyebrow">{selected.categoryLabel}</span><h3>{selected.name}</h3><p>{selected.description}</p><div className="detail-price"><strong>{formatPrice(selected.price)} CLP</strong><span>Precio de ejemplo · Consulta el valor vigente.</span></div>{selected.category === 'plush' && <p className="image-disclaimer">Imagen del personaje como referencia; no representa una fotografía del peluche disponible.</p>}<div className="detail-actions"><button className="button button-dark" onClick={() => add(selected)}><ShoppingBag size={18} /> Agregar al carrito</button><a className="button button-outline" href={whatsappUrl(`¡Hola, Pokenova! Quisiera consultar el precio y disponibilidad de ${selected.name}.`)} onClick={() => consult(selected.id)} target="_blank" rel="noreferrer"><MessageCircle size={18} /> Consultar precio</a></div></Dialog>}
+    {selected && <Dialog onClose={() => setSelectedId(null)} title="Un favorito de cerca" className="product-dialog"><div className={`detail-art tone-${selected.tone}`}><ProductArt product={selected} /></div><span className="eyebrow">{selected.categoryLabel}</span><h3>{selected.name}</h3><p>{selected.description}</p><div className="detail-price"><strong>{formatPrice(selected.price)} CLP</strong><span>{isDemo ? 'Precio de ejemplo · Consulta el valor vigente.' : selected.stock === 0 ? 'Agotado · Consulta por disponibilidad.' : 'Consulta la disponibilidad y el envío.'}</span></div>{isDemo && selected.category === 'plush' && <p className="image-disclaimer">Imagen del personaje como referencia; no representa una fotografía del peluche disponible.</p>}<div className="detail-actions"><button className="button button-dark" onClick={() => add(selected)} disabled={selected.stock === 0}><ShoppingBag size={18} /> Agregar al carrito</button><a className="button button-outline" href={whatsappUrl(`¡Hola, Pokenova! Quisiera consultar el precio y disponibilidad de ${selected.name}.`)} onClick={() => consult(selected.id)} target="_blank" rel="noreferrer"><MessageCircle size={18} /> Consultar precio</a></div></Dialog>}
 
     {cartOpen && <Dialog onClose={() => setCartOpen(false)} title={`Tu colección (${count})`} className="cart-dialog">
       <p className="cart-note">Arma tu consulta. El carrito se vacía al abrir el pedido en WhatsApp.</p>
-      {cart.length === 0 ? <div className="cart-empty"><div><ShoppingBag size={43} strokeWidth={1.3} /><Sparkles size={21} /></div><h3>Una aventura por llenar.</h3><p>Tu próxima colección comienza<br />{' '}con un pequeño favorito.</p><button className="button button-dark" onClick={() => { setCartOpen(false); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}>Explorar la tienda <ArrowRight size={17} /></button></div> : <><div className="cart-items">{cart.map(item => { const product = products.find(p => p.id === item.productId); return <article className="cart-item" key={item.productId}><div className={`cart-item-art tone-${product.tone}`}><ProductArt product={product} /></div><div className="cart-item-info"><span>{product.categoryLabel}</span><h3>{product.name}</h3><strong>{formatPrice(product.price)} CLP</strong><div className="quantity-controls"><button aria-label={`Reducir cantidad de ${product.name}`} onClick={() => setCart(previous => updateQuantity(previous, product.id, item.quantity - 1, product.stock))}><Minus size={13} /></button><span aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span><button aria-label={`Aumentar cantidad de ${product.name}`} disabled={item.quantity >= product.stock} onClick={() => setCart(previous => updateQuantity(previous, product.id, item.quantity + 1, product.stock))}><Plus size={13} /></button></div></div><button className="remove-item icon-button" aria-label={`Eliminar ${product.name}`} onClick={() => setCart(previous => removeFromCart(previous, product.id))}><Trash2 size={17} /></button></article>; })}</div><div className="cart-summary"><div><span>Subtotal de ejemplo</span><strong>{formatPrice(subtotal)} CLP</strong></div><p>Los precios y el stock son demostrativos. El valor final, la disponibilidad y el envío se confirman por WhatsApp.</p><a className="button button-dark" href={whatsappUrl(orderMessage)} onClick={() => consult()} target="_blank" rel="noreferrer"><MessageCircle size={19} /> Consultar mi pedido <ArrowUpRight size={17} /></a><span className="cart-checkout-note"><ShieldCheck size={14} /> Esta consulta no realiza un pago ni reserva productos.</span></div></>}
+      {cart.length === 0 ? <div className="cart-empty"><div><ShoppingBag size={43} strokeWidth={1.3} /><Sparkles size={21} /></div><h3>Una aventura por llenar.</h3><p>Tu próxima colección comienza<br />{' '}con un pequeño favorito.</p><button className="button button-dark" onClick={() => { setCartOpen(false); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}>Explorar la tienda <ArrowRight size={17} /></button></div> : <><div className="cart-items">{cart.map(item => { const product = products.find(p => p.id === item.productId); if (!product) return null; return <article className="cart-item" key={item.productId}><div className={`cart-item-art tone-${product.tone}`}><ProductArt product={product} /></div><div className="cart-item-info"><span>{product.categoryLabel}</span><h3>{product.name}</h3><strong>{formatPrice(product.price)} CLP</strong><div className="quantity-controls"><button aria-label={`Reducir cantidad de ${product.name}`} onClick={() => setCart(previous => updateQuantity(previous, product.id, item.quantity - 1, product.stock))}><Minus size={13} /></button><span aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span><button aria-label={`Aumentar cantidad de ${product.name}`} disabled={item.quantity >= product.stock} onClick={() => setCart(previous => updateQuantity(previous, product.id, item.quantity + 1, product.stock))}><Plus size={13} /></button></div></div><button className="remove-item icon-button" aria-label={`Eliminar ${product.name}`} onClick={() => setCart(previous => removeFromCart(previous, product.id))}><Trash2 size={17} /></button></article>; })}</div><div className="cart-summary"><div><span>{isDemo ? 'Subtotal de ejemplo' : 'Subtotal'}</span><strong>{formatPrice(subtotal)} CLP</strong></div><p>{isDemo ? 'Los precios y el stock son demostrativos. El valor final, la disponibilidad y el envío se confirman por WhatsApp.' : 'El valor final, la disponibilidad y el envío se confirman por WhatsApp.'}</p><a className="button button-dark" href={whatsappUrl(orderMessage)} onClick={() => consult()} target="_blank" rel="noreferrer"><MessageCircle size={19} /> Consultar mi pedido <ArrowUpRight size={17} /></a><span className="cart-checkout-note"><ShieldCheck size={14} /> Esta consulta no realiza un pago ni reserva productos.</span></div></>}
     </Dialog>}
   </>;
 }

@@ -57,8 +57,8 @@ async function expectNoAvailableProducts(page) {
   if (products.length === 0) {
     await expect(page.locator('.empty-search')).toBeVisible();
   } else {
-    await addButton(page, products[0]).click();
-    await expect(page.locator('.toast')).toContainText('Ya agregaste todas las unidades disponibles.');
+    await expect(addButton(page, products[0])).toBeDisabled();
+    await expect(productCard(page, products[0])).toContainText('Agotado');
   }
   await expectEmptyCart(page);
   await expect.poll(() => storedCart(page)).toEqual([]);

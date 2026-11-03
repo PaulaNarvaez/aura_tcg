@@ -179,6 +179,9 @@ h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
 .heading-dot { color: #efac46; }
 .catalog-section .section-intro { margin-bottom: 12px; }
 .demo-notice { font-size: 11px; color: #788172; line-height: 1.7; max-width: 820px; }
+.catalog-status { display: flex; align-items: center; flex-direction: column; gap: 14px; padding: 48px 20px; text-align: center; }
+.catalog-status p { font-weight: 600; }
+.catalog-status > span { font-size: 12px; line-height: 1.7; color: var(--muted); max-width: 380px; }
 .catalog-controls { display: flex; gap: 20px; align-items: center; justify-content: space-between; margin-top: 25px; border-bottom: 1px solid #e1e2d7; padding-bottom: 16px; }
 .filter-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
 .filter-tabs button { border: 1px solid transparent; background: transparent; font-size: 10px; padding: 9px 15px; border-radius: 20px; font-weight: 500; transition: background .2s; }

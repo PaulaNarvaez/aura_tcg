@@ -2,7 +2,7 @@
 
 Esta guía explica cómo mantener la tienda: agregar productos, cambiar fotos y precios, editar textos y publicar los cambios.
 
-Actualmente la tienda se edita mediante sus archivos. Todavía no tiene un panel de administración ni una base de datos. Puedes hacer los cambios por tu cuenta o enviarme las imágenes y los datos para que los preparemos aquí.
+La tienda puede usar el catálogo de muestra de sus archivos o cargar productos desde Supabase al configurar la conexión. Todavía no tiene un panel de administración propio. Puedes hacer los cambios por tu cuenta o enviarme las imágenes y los datos para que los preparemos aquí. Para crear y conectar la base de datos, sigue la [guía de Supabase](supabase/README.md).
 
 ## 1. Cómo enviarme productos para publicar
 
@@ -38,8 +38,10 @@ Si un dato está por definir, indícalo. Los precios y existencias de ejemplo no
 
 | Qué quieres cambiar | Archivo o carpeta |
 | --- | --- |
-| Productos, precios, existencias y descripciones | `src/catalog.js` |
-| Fotos de los productos | `public/images/` |
+| Productos de muestra, precios, existencias y descripciones | `src/catalog.js` |
+| Fotos de muestra y recursos de la página | `public/images/` |
+| Productos y fotos reales al activar Supabase | Table Editor y Storage de Supabase; [guía](supabase/README.md) |
+| Configuración local de la conexión | `.env.local`, a partir de `.env.example` |
 | Número de WhatsApp | `src/site.config.js` |
 | Portada, textos del catálogo, Quiénes somos y pie de página | `src/App.jsx` |
 | Textos y mensajes de la sección de compra de challa y sellados | `src/Buyback.jsx` |
@@ -53,18 +55,25 @@ Puedes abrir la carpeta del proyecto en Visual Studio Code y usar **Ctrl + Shift
 
 ## 3. Ver la tienda mientras editas
 
-En **Símbolo del sistema (CMD)** de Windows, entra en la carpeta del proyecto. Si ya estás en `C:\Users\X1\Downloads\pokenova_tcg`, no necesitas repetir este paso:
+En **Símbolo del sistema (CMD)** de Windows, entra en la carpeta del proyecto. Si ya estás dentro de `pokenova_tcg`, no necesitas repetir este paso:
 
 ```bat
-cd /d C:\Users\X1\Downloads\pokenova_tcg
+cd /d "%USERPROFILE%\Downloads\pokenova_tcg"
 ```
 
-Para la primera instalación, usa Node.js 24 y ejecuta:
+La carpeta debe contener `package.json`. Si la descargaste en otro lugar o el ZIP creó una carpeta adicional, ajusta la ruta hasta llegar a ese archivo.
+
+Para la primera instalación, usa **Node.js 24** y ejecuta:
 
 ```bat
-npm ci
+node --version
+npm ci --include=dev
 npm run dev
 ```
+
+`node --version` debe mostrar `v24…`. Espera a que la instalación termine sin errores antes de arrancar.
+
+Si aparece **«"vite" no se reconoce como un comando interno o externo»**, faltan las dependencias de desarrollo o su instalación quedó incompleta. Dentro de esta misma carpeta, ejecuta `npm ci --include=dev` y, cuando termine correctamente, `npm run dev`. No necesitas instalar Vite globalmente ni borrar `package-lock.json`. Si la instalación falla, comparte su mensaje de error para revisar la causa.
 
 En las siguientes ocasiones, basta con:
 
@@ -78,12 +87,15 @@ Si yo ya subí una actualización a GitHub y tú no tienes cambios locales pendi
 
 ```bat
 git pull
+npm ci --include=dev
 npm run dev
 ```
 
-Si Git indica que tus propias ediciones impiden actualizar, compárteme el mensaje para integrar ambos cambios. Si instalas nuevas dependencias o cambia `package-lock.json`, ejecuta `npm ci` antes de arrancar.
+Si Git indica que tus propias ediciones impiden actualizar, compárteme el mensaje para integrar ambos cambios. La reinstalación después de actualizar incorpora las dependencias de `package-lock.json`.
 
 ## 4. Agregar y editar productos
+
+Estas instrucciones editan el catálogo de muestra. Si ya activaste Supabase, administra las fichas reales en **Table Editor → products** y sus fotos en **Storage**; los cambios se cargan al abrir o recargar la página.
 
 Abre `src/catalog.js`. Busca la lista que empieza con:
 
@@ -163,7 +175,7 @@ Esos números también son un ejemplo. Guarda el archivo y revisa la ficha en el
 
 ### Productos agotados o retirados
 
-- `stock: 0` impide agregar unidades al carrito. El producto sigue visible y se puede consultar por WhatsApp; esta versión todavía no muestra una etiqueta automática de «Agotado».
+- `stock: 0` muestra «Agotado» e impide agregar unidades al carrito. El producto sigue visible y se puede consultar por WhatsApp.
 - Para retirar un producto del catálogo, elimina su bloque completo de la lista o pídeme que lo retire.
 - El stock se actualiza manualmente. Abrir una consulta por WhatsApp no descuenta existencias ni reserva productos. Actualiza la cantidad cuando confirmes una venta.
 - La versión actual usa precios numéricos. Si quieres mostrar «Precio a consultar» en ciertos productos, podemos incorporar esa opción.
@@ -252,13 +264,13 @@ También puedes pedirme el cambio con palabras sencillas: «quiero más azul», 
 
 ## 8. Pasar del catálogo de ejemplo al catálogo real
 
-La tienda todavía contiene productos, precios y existencias de demostración. Incorporar fotos propias no cambia automáticamente ese estado.
+Sin configurar Supabase, la tienda usa productos, precios y existencias de demostración. Incorporar fotos propias en los archivos no cambia automáticamente ese estado.
 
-Cuando confirmes los datos reales, puedo sustituir los productos de muestra y ajustar los avisos de catálogo, precio y subtotal que aparecen en `src/App.jsx`, además de las descripciones y la documentación.
+Para activar el catálogo real, sigue la [guía de Supabase](supabase/README.md): crea el proyecto, ejecuta la migración, agrega tus fichas y configura la URL y la clave pública. No se copian los ejemplos automáticamente a la base de datos.
 
-También hay una advertencia para imágenes de peluches que actualmente se muestra en todas sus fichas. Debe revisarse cuando se use una fotografía real del producto.
+Con la conexión configurada, los avisos de ejemplo se retiran del catálogo, de las fichas y del carrito. Si la conexión falla, aparece un aviso con un botón para reintentar; no se reemplaza el inventario por productos de muestra. Las fichas con `stock = 0` aparecen como agotadas y mantienen la opción de consultar por WhatsApp.
 
-Puedes indicarme: «Estos productos, fotos, precios y cantidades son reales; reemplaza los ejemplos». Si queda algún producto de muestra, mantendremos claro cuáles datos están confirmados.
+Publica solo fotos, precios y existencias confirmados. El carrito sigue siendo una consulta; no descuenta existencias ni reserva productos.
 
 ## 9. Revisar y publicar
 
@@ -298,5 +310,7 @@ Subir los archivos a GitHub y publicar la web son pasos distintos. El flujo de p
 4. Abre esa dirección y comprueba que aparezcan los nuevos productos.
 
 Ver los nuevos archivos en el repositorio no confirma que la web pública se haya actualizado. Del mismo modo, `npm run dev` muestra tu copia de desarrollo, no publica la tienda en Internet.
+
+Si usas Supabase, configura las dos variables públicas también en GitHub antes de publicar, como explica la [guía de conexión](supabase/README.md). El archivo `.env.local` de tu computador no se sube al repositorio ni configura GitHub Pages.
 
 Si un paso falla, envíame el mensaje de error o una captura y podremos revisar el punto que falta.
