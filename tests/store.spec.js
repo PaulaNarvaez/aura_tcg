@@ -68,6 +68,36 @@ function normalizeSearch(text) {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es-CL');
 }
 
+async function exerciseQuickSearch(page, submitWithEnter = false) {
+  const quickSearch = page.getByRole('search', { name: 'Búsqueda rápida de productos', exact: true });
+  const quickInput = quickSearch.getByRole('searchbox', { name: 'Buscar productos', exact: true });
+  await expect(quickSearch).toBeVisible();
+  await expect(quickInput).toBeVisible();
+  if (products.length === 0) return;
+
+  const product = products[0];
+  const otherCategory = categories.find(item => item.id !== 'all' && item.id !== product.category);
+  if (otherCategory) {
+    await page.locator('.filter-tabs').getByRole('button', { name: otherCategory.label, exact: true }).click();
+  }
+  await quickInput.fill(product.name);
+  const all = categories.find(item => item.id === 'all');
+  await expect(page.locator('.filter-tabs').getByRole('button', { name: all.label, exact: true })).toHaveAttribute('aria-pressed', 'true');
+  if (submitWithEnter) await quickInput.press('Enter');
+  else await quickSearch.getByRole('button', { name: 'Buscar', exact: true }).click();
+
+  const catalogInput = page.getByRole('searchbox', { name: 'Buscar en el catálogo', exact: true });
+  await expect(catalogInput).toHaveValue(product.name);
+  await expect(catalogInput).toBeFocused();
+  await expect(catalogInput).toBeInViewport();
+  const matches = products.filter(item => normalizeSearch(`${item.name} ${item.categoryLabel} ${item.description}`).includes(normalizeSearch(product.name)));
+  await expect(page.locator('.product-name')).toHaveText(matches.map(item => item.name));
+  // The matching query and results stay present after submission, without a reload.
+  await catalogInput.fill('');
+  await expect(quickInput).toHaveValue('');
+  await expect(page.locator('.product-card')).toHaveCount(products.length);
+}
+
 async function screenshot(page, path) {
   await expect(page.locator('.toast')).not.toHaveClass(/visible/);
   await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
@@ -97,6 +127,7 @@ test('desktop browsing, product details, persistent cart, and clearing a consult
     await expect(page.locator('.product-card')).toHaveCount(categoryProducts.length);
     await expect(page.locator('.result-count')).toHaveText(`${categoryProducts.length} ${categoryProducts.length === 1 ? 'favorito' : 'favoritos'} por descubrir`);
   }
+  await exerciseQuickSearch(page, true);
   await page.locator('.filter-tabs').getByRole('button', { name: categories.find(item => item.id === 'all').label, exact: true }).click();
   if (products.length > 0) {
     const query = products[0].name;
@@ -203,6 +234,7 @@ test('mobile navigation, cart, and page width', async ({ page }) => {
   await page.getByRole('navigation').getByRole('link', { name: 'Quiénes somos' }).click();
   await expect(page.getByRole('button', { name: 'Abrir menú' })).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('navigation')).not.toBeVisible();
+  await exerciseQuickSearch(page);
   const widths = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: window.innerWidth }));
   expect(widths.document).toBeLessThanOrEqual(widths.viewport);
 

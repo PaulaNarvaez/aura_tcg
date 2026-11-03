@@ -136,6 +136,7 @@ test('sold-out items remain consultable, while a real order uses current CLP val
 
   await productCard(page, card).getByRole('button', { name: `Agregar ${card.name} al carrito`, exact: true }).click();
   await page.getByRole('button', { name: 'Abrir carrito, 1 productos', exact: true }).click();
+  await expect(page.locator('.toast')).not.toHaveClass(/visible/);
   const order = page.getByRole('dialog').getByRole('link', { name: 'Consultar mi pedido' });
   const url = new URL(await order.getAttribute('href'));
   expect(url.origin).toBe('https://wa.me');

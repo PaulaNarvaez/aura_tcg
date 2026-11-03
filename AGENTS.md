@@ -14,6 +14,8 @@ Repositorio actual de GitHub: `PaulaNarvaez/aura_tcg` (el anterior `pokenova_tcg
 - La sección **Compramos tus cartas** recibe consultas por challa/cartas sueltas, lotes y productos sellados. La tasación se coordina por WhatsApp; no prometas un precio fijo ni una compra automática.
 - Conserva el diseño adaptable a celulares, usa el logo de la tienda como icono de pestaña y respeta `prefers-reduced-motion` en las animaciones.
 - La identidad de Aura TCG & Print usa el logo entregado por la usuaria y una paleta galáctica con cian, azul, violeta y rosa. Lucario es el Pokémon de la portada, acorde a sus colores y al nombre Aura.
+- Prioriza la lectura con textos y formularios grandes, también en móvil. Mantén el buscador visible para compradores en el encabezado y destacado dentro del catálogo.
+- El pie incluye el copyright de Aura, la atribución de las marcas e imágenes de Pokémon y el aviso de tienda independiente, sin prometer protección frente a reclamos. El crédito debe mostrar «Creado por paujnarvaez con ♥», con el nombre en negrita.
 
 ## Commits
 

@@ -132,6 +132,13 @@ export default function App() {
   };
   const chooseCategory = (id) => { setCategory(id); setQuery(''); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); };
   const closeMenu = () => setMenuOpen(false);
+  const submitQuickSearch = (event) => {
+    event.preventDefault();
+    setCategory('all');
+    setMenuOpen(false);
+    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' });
+    searchRef.current?.focus({ preventScroll: true });
+  };
   const consult = (productId) => {
     const next = productId ? removeFromCart(cart, productId) : [];
     saveCart(getLocalStorage(), next);
@@ -160,11 +167,16 @@ export default function App() {
           <a href="#nosotros" onClick={closeMenu}>Quiénes somos</a>
         </nav>
         <div className="nav-actions">
-          <button className="icon-button search-nav" aria-label="Buscar productos" onClick={() => { document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); searchRef.current?.focus({ preventScroll: true }); }}><Search size={21} /></button>
-          <button className="cart-button" onClick={() => setCartOpen(true)} disabled={!catalogReady} aria-label={`Abrir carrito, ${count} productos`}><ShoppingBag size={19} /><span>Mi carrito</span><b>{count}</b></button>
+          <button className="cart-button" onClick={() => { setToast(null); setCartOpen(true); }} disabled={!catalogReady} aria-label={`Abrir carrito, ${count} productos`}><ShoppingBag size={19} /><span>Mi carrito</span><b>{count}</b></button>
           <button className="icon-button mobile-menu" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
         </div>
       </div>
+      <form className="quick-search container" role="search" aria-label="Búsqueda rápida de productos" onSubmit={submitQuickSearch}>
+        <Search size={22} aria-hidden="true" />
+        <label className="sr-only" htmlFor="quick-search">Buscar productos</label>
+        <input id="quick-search" type="search" value={query} onChange={event => { setQuery(event.target.value); setCategory('all'); }} placeholder="Busca cartas, peluches, ETB…" />
+        <button className="quick-search-button" type="submit">Buscar <ArrowRight size={18} /></button>
+      </form>
     </header>
 
     <main>
@@ -204,10 +216,23 @@ export default function App() {
       <section className="catalog-section container" id="catalogo" aria-labelledby="catalog-title">
         <div className="section-intro"><div><span className="eyebrow"><Sparkles size={14} /> EXPLORA NUESTRO CATÁLOGO POKÉMON</span><h2 id="catalog-title">Pokémon para tu colección<span className="heading-dot">.</span></h2></div><span className="catalog-label">{isDemo ? 'CATÁLOGO DE MUESTRA' : 'CATÁLOGO AURA'}</span></div>
         <p className="demo-notice">{isDemo ? 'Estamos preparando la tienda. Precios y existencias de ejemplo, con imágenes referenciales; consulta los valores vigentes por WhatsApp.' : 'Consulta la disponibilidad, el valor final y el envío por WhatsApp.'}</p>
-        <div className="catalog-controls"><div className="filter-tabs" aria-label="Categorías de productos">{categories.map(item => <button key={item.id} onClick={() => setCategory(item.id)} aria-pressed={category === item.id} className={category === item.id ? 'active' : ''}>{item.label}</button>)}</div><div className="search-sort"><label className="search-field"><Search size={17} /><input ref={searchRef} type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Busca tu favorito" aria-label="Buscar en el catálogo" /></label><label className="sort-field"><span className="sr-only">Ordenar productos</span><select value={sort} onChange={e => setSort(e.target.value)}><option value="featured">Destacados</option><option value="price-asc">Menor precio</option><option value="price-desc">Mayor precio</option></select><ChevronDown size={14} /></label></div></div>
+        <div className="catalog-controls">
+          <form className="catalog-search-panel" role="search" aria-label="Buscar en el catálogo" onSubmit={event => { event.preventDefault(); document.getElementById('catalog-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
+            <label className="catalog-search-label" htmlFor="catalog-search">¿Qué estás buscando?</label>
+            <div className="catalog-search-row">
+              <label className="search-field"><Search size={22} aria-hidden="true" /><input id="catalog-search" ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Busca cartas, peluches, ETB y accesorios…" aria-label="Buscar en el catálogo" aria-describedby="catalog-search-help" /></label>
+              <button className="button button-dark catalog-search-button" type="submit">Buscar <Search size={19} /></button>
+            </div>
+            <p className="catalog-search-help" id="catalog-search-help">Busca por nombre de producto, Pokémon o edición.</p>
+          </form>
+          <div className="catalog-filter-row">
+            <div className="filter-tabs" aria-label="Categorías de productos">{categories.map(item => <button key={item.id} onClick={() => setCategory(item.id)} aria-pressed={category === item.id} className={category === item.id ? 'active' : ''}>{item.label}</button>)}</div>
+            <label className="sort-field"><span className="sr-only">Ordenar productos</span><select value={sort} onChange={event => setSort(event.target.value)}><option value="featured">Destacados</option><option value="price-asc">Menor precio</option><option value="price-desc">Mayor precio</option></select><ChevronDown size={14} /></label>
+          </div>
+        </div>
         {catalog.status === 'loading' && <div className="catalog-status" role="status"><Sparkles size={25} /><p>Cargando productos…</p></div>}
         {catalog.status === 'error' && <div className="catalog-status" role="alert"><p>No pudimos cargar el catálogo.</p><span>Puedes intentarlo otra vez o consultar los productos por WhatsApp.</span><button className="button button-dark" onClick={() => setLoadAttempt(attempt => attempt + 1)}>Reintentar <ArrowRight size={16} /></button></div>}
-        {catalogReady && <p className="result-count" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'favorito por descubrir' : 'favoritos por descubrir'}</p>}
+        {catalogReady && <p className="result-count" id="catalog-results" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'favorito por descubrir' : 'favoritos por descubrir'}</p>}
         <div className="product-grid" aria-busy={catalog.status === 'loading'}>{filtered.map(product => <article className="product-card" key={product.id}>
           <button className={`product-image tone-${product.tone}`} onClick={() => setSelectedId(product.id)} aria-label={`Ver detalles de ${product.name}`}>
             {product.badge && <span className="product-badge">{product.badge === 'Favorito' && <Star size={11} fill="currentColor" />} {product.badge}</span>}
@@ -229,7 +254,7 @@ export default function App() {
       <section className="contact-banner container"><div><span className="eyebrow">TÚ PREGUNTA. NOSOTROS TE AYUDAMOS.</span><h2>¿Una duda? <span>¡Te leemos!</span><span className="chat-emoji" aria-hidden="true">💬</span></h2><p>Consulta por productos Pokémon o cuéntanos qué pieza 3D necesitas.</p></div><a className="button button-dark" href={whatsappUrl('¡Hola, Aura! Quisiera consultar por productos Pokémon o cotizar una pieza de impresión 3D a medida.')} target="_blank" rel="noreferrer"><MessageCircle size={19} /> Escríbenos por WhatsApp <ArrowUpRight size={18} /></a></section>
     </main>
 
-    <footer className="footer"><div className="container footer-top"><a className="brand" href="#inicio"><img className="brand-logo" src={imagePath('/images/aura-logo.png')} alt="Aura TCG & Print" /></a><p>Pokémon e impresión 3D.<br />{' '}Accesorios a tu medida.</p><div className="footer-links"><a href="#impresion-3d">Impresión 3D</a><a href="#catalogo">La tienda</a><a href="#compramos">Compramos tus cartas</a><a href="#nosotros">Nuestra historia</a><a href={whatsappUrl('¡Hola, Aura! Quisiera hacer una consulta.')} target="_blank" rel="noreferrer">Contacto <ArrowUpRight size={13} /></a></div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} Aura TCG & Print. Creado por paujnarvaez con am♥r.</span><span>Proyecto independiente. Pokémon y sus marcas pertenecen a sus respectivos titulares.</span></div></footer>
+    <footer className="footer"><div className="container footer-top"><a className="brand" href="#inicio"><img className="brand-logo" src={imagePath('/images/aura-logo.png')} alt="Aura TCG & Print" /></a><p>Pokémon e impresión 3D.<br />{' '}Accesorios a tu medida.</p><div className="footer-links"><a href="#impresion-3d">Impresión 3D</a><a href="#catalogo">La tienda</a><a href="#compramos">Compramos tus cartas</a><a href="#nosotros">Nuestra historia</a><a href={whatsappUrl('¡Hola, Aura! Quisiera hacer una consulta.')} target="_blank" rel="noreferrer">Contacto <ArrowUpRight size={13} /></a></div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} Aura TCG & Print.<span className="footer-credit">Creado por <strong>paujnarvaez</strong> con <span className="credit-heart" role="img" aria-label="amor">♥</span></span></span><span className="footer-legal">Todos los derechos reservados sobre el contenido propio de Aura. Las marcas, personajes e imágenes de Pokémon pertenecen a sus respectivos titulares. Aura TCG & Print es una tienda independiente, sin afiliación oficial con Pokémon.</span></div></footer>
     <a className="floating-whatsapp" href={whatsappUrl('¡Hola, Aura! Quisiera consultar por Pokémon o impresión 3D a medida.')} target="_blank" rel="noreferrer" aria-label="Consultar precios por WhatsApp"><MessageCircle size={25} /><span>¿Hablamos?</span><span className="whatsapp-dot" /></a>
     <div className={toast ? 'toast visible' : 'toast'} role="status" aria-live="polite">{toast && <><span><Check size={17} /></span>{toast.message}<button className="icon-button" aria-label="Cerrar aviso" onClick={() => setToast(null)}><X size={16} /></button></>}</div>
 
