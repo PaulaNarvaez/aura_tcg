@@ -1,5 +1,7 @@
 # Pokenova TCG
 
+Repositorio actual de GitHub: `PaulaNarvaez/aura_tcg` (el anterior `pokenova_tcg` redirige allí).
+
 ## Desarrollo
 
 - Trabaja en el checkout existente. Cada tarea de la nube ya está aislada; no crees un worktree salvo petición explícita.
