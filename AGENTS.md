@@ -22,9 +22,9 @@
 - El número público de WhatsApp está en `src/site.config.js`: **+56 9 9871 6582**.
 - La atención de la tienda utiliza solo WhatsApp, según la preferencia de la usuaria.
 - El catálogo de demostración está en `src/catalog.js`.
-- La conexión opcional a Supabase está en `src/catalog-source.js`, y la migración y guía están en `supabase/`. Usa únicamente URL y clave pública (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`); nunca una clave secret/service_role en Vite.
-- Sin configuración usa el catálogo de muestra. Si la configuración de Supabase está incompleta o la carga falla, muestra error y reintento, sin volver silenciosamente a ejemplos. Restaura y guarda el carrito solo después de cargar el inventario para no perder los productos persistidos ante un error.
-- La lectura pública de la tabla debe limitarse a productos publicados mediante RLS. No habilites escritura anónima. La administración inicial se realiza en el dashboard de Supabase; todavía no existe un panel propio ni una base remota configurada en este entorno.
+- La usuaria eligió **Neon (PostgreSQL)** y quiere comenzar sin costo mientras prueba. La conexión privada está en `DATABASE_URL`, leída solo por el servidor de `server/`. Nunca expongas la conexión en variables `VITE_`, respuestas, errores o archivos de Git.
+- El catálogo real se activa con `VITE_CATALOG_API_URL=/api/products`; `src/catalog-source.js` carga la API y valida los productos. Sin esa variable se usa la muestra; si la API falla, muestra error y reintento sin volver a ejemplos. Restaura y guarda el carrito solo después de cargar el inventario correctamente.
+- El esquema y las instrucciones están en `database/`. El servidor solo expone lectura de productos publicados. No hay panel privado propio ni conexión remota configurada aún. Para publicación con Node y Neon, la guía propone Render; GitHub Pages sirve únicamente los archivos estáticos.
 - Las opciones y el formulario de cotización de impresión 3D están en `src/CustomPrints.jsx`. Son servicios a cotizar, sin precios ni existencias inventados.
 - No guardes credenciales ni archivos `.env` en Git.
 - La compilación acepta `VITE_BASE_PATH` para alojarse en una subruta, por ejemplo `/pokenova_tcg/` en GitHub Pages.

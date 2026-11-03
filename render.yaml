@@ -1,0 +1,13 @@
+# Preparación para publicar más adelante; este archivo no crea servicios por sí solo.
+services:
+  - type: web
+    name: pokenova-tcg
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: VITE_CATALOG_API_URL
+        value: /api/products

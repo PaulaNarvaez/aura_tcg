@@ -1,14 +1,14 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { ArrowDown, ArrowRight, Box, ArrowUpRight, Check, ChevronDown, Heart, Menu, MessageCircle, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, Star, Trash2, X, Zap } from 'lucide-react';
 import { categories, filterProducts, formatPrice, products as demoProducts } from './catalog.js';
-import { hasSupabaseConfig, imageUrl, loadProducts } from './catalog-source.js';
+import { hasCatalogConfig, imageUrl, loadProducts } from './catalog-source.js';
 import { addToCart, getCartCount, getCartSubtotal, readCart, removeFromCart, saveCart, updateQuantity } from './cart.js';
 import { whatsappUrl } from './site.config.js';
 import Buyback from './Buyback.jsx';
 import CustomPrints from './CustomPrints.jsx';
 
 const imagePath = (path) => imageUrl(path, import.meta.env.BASE_URL);
-const usesDatabase = hasSupabaseConfig(import.meta.env);
+const usesDatabase = hasCatalogConfig(import.meta.env);
 const backgroundGlints = Array.from({ length: 24 }, (_, index) => ({
   id: index,
   style: {
@@ -99,8 +99,7 @@ export default function App() {
     const timeout = setTimeout(() => controller.abort(), 15_000);
     setCatalog({ status: 'loading', products: [] });
     loadProducts({
-      url: import.meta.env.VITE_SUPABASE_URL,
-      key: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      url: import.meta.env.VITE_CATALOG_API_URL,
       signal: controller.signal,
     }).then(items => {
       if (cancelled) return;

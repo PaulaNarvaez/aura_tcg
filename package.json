@@ -3,8 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "dev:api": "node --env-file-if-exists=.env.local --watch server/index.js",
+    "start": "node --env-file-if-exists=.env.local server/index.js",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test tests/*.test.js",
@@ -13,6 +18,7 @@
   "dependencies": {
     "@fontsource/dm-sans": "5.3.0",
     "@fontsource/space-grotesk": "5.3.0",
+    "@neondatabase/serverless": "1.2.0",
     "lucide-react": "1.55.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"

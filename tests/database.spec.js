@@ -2,8 +2,7 @@ import { expect, test } from '@playwright/test';
 import { formatPrice } from '../src/catalog.js';
 import { store } from '../src/site.config.js';
 
-const api = 'https://pokenova-test.supabase.co/rest/v1/products*';
-const publicKey = 'sb_publishable_pokenova_browser_test_only';
+const api = '**/api/products';
 const storageKey = 'pokenova-cart-v1';
 const card = {
   id: 'remote-card',
@@ -11,7 +10,7 @@ const card = {
   category: 'cards',
   price: 12990,
   stock: 2,
-  image: 'https://pokenova-test.supabase.co/storage/v1/object/public/product-images/carta.png',
+  image: 'https://images.example.test/carta.png',
   badge: 'Nuevo',
   tone: 'yellow',
   description: 'Producto de prueba para comprobar el catálogo conectado.',
@@ -43,14 +42,14 @@ function productCard(page, product) {
 }
 
 test.beforeEach(async ({ context }) => {
-  // Avoid contacting Storage as well as the API; the URL remains inspectable.
+  // Avoid contacting image hosts as well as the API; the URL remains inspectable.
   await context.route(card.image, route => route.fulfill({
     contentType: 'image/svg+xml',
     body: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="gold"/></svg>',
   }));
 });
 
-test('waits for remote inventory before restoring the saved cart and preserves Storage image URLs', async ({ page, context }) => {
+test('waits for remote inventory before restoring the saved cart and preserves remote image URLs', async ({ page, context }) => {
   const original = [
     { productId: card.id, quantity: 8 },
     { productId: 'retired-product', quantity: 1 },
@@ -78,9 +77,12 @@ test('waits for remote inventory before restoring the saved cart and preserves S
   await expect(productCard(page, card).getByRole('img', { name: card.name, exact: true })).toHaveAttribute('src', card.image);
   await expect.poll(() => requests.length).toBeGreaterThan(0);
   const request = requests.at(-1);
-  const query = new URL(request.url()).searchParams;
-  expect(query.get('is_published')).toBe('eq.true');
-  expect(request.headers().apikey).toBe(publicKey);
+  const endpoint = new URL(request.url());
+  expect(endpoint.pathname).toBe('/api/products');
+  expect(endpoint.search).toBe('');
+  expect(request.method()).toBe('GET');
+  expect(request.postData()).toBeNull();
+  expect(request.headers().apikey).toBeUndefined();
   expect(request.headers().authorization).toBeUndefined();
   await page.getByRole('button', { name: 'Abrir carrito, 2 productos', exact: true }).click();
   const cart = page.getByRole('dialog', { name: 'Tu colección (2)' });

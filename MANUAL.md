@@ -2,7 +2,7 @@
 
 Esta guía explica cómo mantener la tienda: agregar productos, cambiar fotos y precios, editar textos y publicar los cambios.
 
-La tienda puede usar el catálogo de muestra de sus archivos o cargar productos desde Supabase al configurar la conexión. Todavía no tiene un panel de administración propio. Puedes hacer los cambios por tu cuenta o enviarme las imágenes y los datos para que los preparemos aquí. Para crear y conectar la base de datos, sigue la [guía de Supabase](supabase/README.md).
+La tienda puede usar el catálogo de muestra de sus archivos o cargar productos desde PostgreSQL en Neon mediante su servidor. La conexión está preparada, pero falta configurar el proyecto remoto. Todavía no tiene un panel de administración propio. Puedes editar el contenido o enviarme las imágenes y los datos para que los preparemos aquí. Para activar la base de datos, sigue la [guía de Neon](database/README.md).
 
 ## 1. Cómo enviarme productos para publicar
 
@@ -30,7 +30,7 @@ Agrega los detalles que correspondan:
 
 Para una actualización, basta con decir qué producto cambia y cuál es el nuevo dato. Por ejemplo: «Peluche Eevee: precio $18.990, quedan 3 unidades y reemplaza la foto por la que adjunto».
 
-Con esa información puedo incorporar las fotos, actualizar las fichas, revisar cómo se ven en móvil y escritorio y subir los cambios a GitHub con PaulaNarvaez como autora. Los títulos de los commits mantienen la hora y fecha reales de Chile. La publicación de la web se realiza con el flujo de GitHub Pages explicado en la sección 9.
+Con esa información puedo incorporar las fotos, actualizar las fichas, revisar cómo se ven en móvil y escritorio y subir los cambios a GitHub con PaulaNarvaez como autora. Los títulos de los commits mantienen la hora y fecha reales de Chile. La sección 9 explica la publicación con servidor para Neon y la opción estática de muestra en GitHub Pages.
 
 Si un dato está por definir, indícalo. Los precios y existencias de ejemplo no se deben convertir en información comercial real sin que confirmes esos datos.
 
@@ -38,10 +38,11 @@ Si un dato está por definir, indícalo. Los precios y existencias de ejemplo no
 
 | Qué quieres cambiar | Archivo o carpeta |
 | --- | --- |
-| Productos de muestra, precios, existencias y descripciones | `src/catalog.js` |
-| Fotos de muestra y recursos de la página | `public/images/` |
-| Productos y fotos reales al activar Supabase | Table Editor y Storage de Supabase; [guía](supabase/README.md) |
-| Configuración local de la conexión | `.env.local`, a partir de `.env.example` |
+| Productos, precios y existencias de muestra | `src/catalog.js` |
+| Productos reales al activar Neon | Tabla `products` de Neon; [guía](database/README.md) |
+| Fotos de los productos y recursos de la página | `public/images/`, o una URL HTTPS de la foto |
+| Conexión privada a la base de datos | `.env.local`, a partir de `.env.example`; no se sube a GitHub |
+| Servidor que consulta los productos publicados | `server/` |
 | Número de WhatsApp | `src/site.config.js` |
 | Portada, textos del catálogo, Quiénes somos y pie de página | `src/App.jsx` |
 | Textos y mensajes de la sección de compra de challa y sellados | `src/Buyback.jsx` |
@@ -49,11 +50,14 @@ Si un dato está por definir, indícalo. Los precios y existencias de ejemplo no
 | Colores, tamaños, tarjetas, fondo y animaciones | `src/styles.css` |
 | Símbolo del logo e icono de la pestaña | `public/favicon.svg` |
 | Título de la pestaña y descripción para buscadores | `index.html` |
-| Publicación de la web | `.github/workflows/pages.yml` |
+| Preparación de la publicación con Neon y Node | `render.yaml` y [guía](database/README.md) |
+| Publicación estática de muestra | `.github/workflows/pages.yml` |
 
 Puedes abrir la carpeta del proyecto en Visual Studio Code y usar **Ctrl + Shift + F** para buscar un texto en todos los archivos.
 
 ## 3. Ver la tienda mientras editas
+
+Los comandos de esta sección permiten abrir la muestra sin configurar la conexión. Si ya activaste Neon, necesitas también `npm run dev:api` en otra terminal, como explica la [guía de arranque con base de datos](database/README.md).
 
 En **Símbolo del sistema (CMD)** de Windows, entra en la carpeta del proyecto. Si ya estás dentro de `pokenova_tcg`, no necesitas repetir este paso:
 
@@ -95,7 +99,7 @@ Si Git indica que tus propias ediciones impiden actualizar, compárteme el mensa
 
 ## 4. Agregar y editar productos
 
-Estas instrucciones editan el catálogo de muestra. Si ya activaste Supabase, administra las fichas reales en **Table Editor → products** y sus fotos en **Storage**; los cambios se cargan al abrir o recargar la página.
+Estas instrucciones editan el catálogo de muestra. Si ya activaste Neon, edita las fichas reales en su tabla `products`, como explica la [guía de conexión](database/README.md). Sus cambios se cargan al abrir o recargar la página.
 
 Abre `src/catalog.js`. Busca la lista que empieza con:
 
@@ -264,13 +268,13 @@ También puedes pedirme el cambio con palabras sencillas: «quiero más azul», 
 
 ## 8. Pasar del catálogo de ejemplo al catálogo real
 
-Sin configurar Supabase, la tienda usa productos, precios y existencias de demostración. Incorporar fotos propias en los archivos no cambia automáticamente ese estado.
+Sin configurar la conexión, la tienda usa productos, precios y existencias de demostración. Incorporar fotos propias en los archivos no cambia automáticamente ese estado.
 
-Para activar el catálogo real, sigue la [guía de Supabase](supabase/README.md): crea el proyecto, ejecuta la migración, agrega tus fichas y configura la URL y la clave pública. No se copian los ejemplos automáticamente a la base de datos.
+Para activar el catálogo real, sigue la [guía de Neon](database/README.md): crea el proyecto, ejecuta el esquema SQL, agrega las fichas confirmadas y configura `.env.local`. Los ejemplos no se copian automáticamente a la base de datos. La contraseña se usa solo en el servidor, nunca en el navegador.
 
-Con la conexión configurada, los avisos de ejemplo se retiran del catálogo, de las fichas y del carrito. Si la conexión falla, aparece un aviso con un botón para reintentar; no se reemplaza el inventario por productos de muestra. Las fichas con `stock = 0` aparecen como agotadas y mantienen la opción de consultar por WhatsApp.
+Con la API activada, los avisos de ejemplo se retiran del catálogo, de las fichas y del carrito. Si la conexión falla, aparece un aviso para reintentar sin sustituir el inventario por muestras. Las fichas sin stock conservan la consulta por WhatsApp.
 
-Publica solo fotos, precios y existencias confirmados. El carrito sigue siendo una consulta; no descuenta existencias ni reserva productos.
+El carrito sigue siendo una consulta: no descuenta existencias ni reserva productos. Todavía no hay un panel privado propio para administrar la tienda.
 
 ## 9. Revisar y publicar
 
@@ -300,7 +304,11 @@ Si editas por tu cuenta, puedes usar GitHub Desktop: abre el repositorio, revisa
 
 También puedes editar un archivo desde GitHub con el botón del lápiz o subir imágenes desde **Add file → Upload files** en `public/images/`. Subir la foto por sí sola no agrega un producto: su ficha también debe referenciarla en `src/catalog.js`.
 
-### Publicar la web pública
+### Publicar la tienda con Neon
+
+Para la tienda conectada a Neon necesitamos alojar también el servidor Node.js. La [guía de Neon y publicación](database/README.md) explica cómo prepararlo en Render con su plan gratuito para pruebas. GitHub Pages sirve archivos estáticos y no ejecuta ese servidor.
+
+### Publicar la versión estática de muestra en GitHub Pages
 
 Subir los archivos a GitHub y publicar la web son pasos distintos. El flujo de publicación actual se ejecuta manualmente:
 
@@ -310,7 +318,5 @@ Subir los archivos a GitHub y publicar la web son pasos distintos. El flujo de p
 4. Abre esa dirección y comprueba que aparezcan los nuevos productos.
 
 Ver los nuevos archivos en el repositorio no confirma que la web pública se haya actualizado. Del mismo modo, `npm run dev` muestra tu copia de desarrollo, no publica la tienda en Internet.
-
-Si usas Supabase, configura las dos variables públicas también en GitHub antes de publicar, como explica la [guía de conexión](supabase/README.md). El archivo `.env.local` de tu computador no se sube al repositorio ni configura GitHub Pages.
 
 Si un paso falla, envíame el mensaje de error o una captura y podremos revisar el punto que falta.

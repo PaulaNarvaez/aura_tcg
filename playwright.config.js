@@ -24,16 +24,13 @@ export default defineConfig({
     {
       command: 'npm run dev -- --port 4173 --strictPort',
       url: 'http://127.0.0.1:4173',
-      env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
+      env: { VITE_CATALOG_API_URL: '' },
       reuseExistingServer: false,
     },
     {
       command: 'npm run dev -- --port 4174 --strictPort',
       url: 'http://127.0.0.1:4174',
-      env: {
-        VITE_SUPABASE_URL: 'https://pokenova-test.supabase.co',
-        VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_pokenova_browser_test_only',
-      },
+      env: { VITE_CATALOG_API_URL: '/api/products' },
       reuseExistingServer: false,
     },
   ],
