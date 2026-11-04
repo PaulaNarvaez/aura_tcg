@@ -83,23 +83,63 @@ async function exerciseQuickSearch(page, submitWithEnter = false) {
     await page.locator('.filter-tabs').getByRole('button', { name: otherCategory.label, exact: true }).click();
   }
   await quickInput.fill(product.name);
-  const all = categories.find(item => item.id === 'all');
-  await expect(page.locator('.filter-tabs').getByRole('button', { name: all.label, exact: true })).toHaveAttribute('aria-pressed', 'true');
+  if (otherCategory) {
+    await expect(page.locator('.filter-tabs').getByRole('button', { name: otherCategory.label, exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.product-grid .product-name')).toHaveText(products.filter(item => item.category === otherCategory.id).map(item => item.name));
+  }
   if (submitWithEnter) await quickInput.press('Enter');
   else await quickSearch.getByRole('button', { name: 'Buscar', exact: true }).click();
 
+  const all = categories.find(item => item.id === 'all');
+  await expect(page.locator('.filter-tabs').getByRole('button', { name: all.label, exact: true })).toHaveAttribute('aria-pressed', 'true');
   const catalogHeading = page.locator('#catalog-title');
   await expect(quickInput).toHaveValue(product.name);
   await expect(page.locator('.catalog-current-search')).toContainText(product.name);
-  await expect(catalogHeading).toBeFocused();
+  if (submitWithEnter) await expect(quickInput).toBeFocused();
+  else await expect(quickSearch.getByRole('button', { name: 'Buscar', exact: true })).toBeFocused();
   await expect(catalogHeading).toBeInViewport();
   const matches = products.filter(item => normalizeSearch(`${item.name} ${item.categoryLabel} ${item.description}`).includes(normalizeSearch(product.name)));
-  await expect(page.locator('.product-name')).toHaveText(matches.map(item => item.name));
+  await expect(page.locator('.product-grid .product-name')).toHaveText(matches.map(item => item.name));
   // Submission preserves the query; clearing it restores the complete inventory.
   await page.getByRole('button', { name: 'Quitar búsqueda', exact: true }).click();
   await expect(catalogHeading).toBeFocused();
   await expect(quickInput).toHaveValue('');
   await expect(page.locator('.product-card')).toHaveCount(products.length);
+}
+
+function categoriesTrigger(page) {
+  return page.getByRole('button', { name: /^(Abrir|Cerrar) menú de categorías$/ });
+}
+
+async function openCategories(page) {
+  const trigger = categoriesTrigger(page);
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+  const panel = page.getByRole('region', { name: 'Menú de categorías', exact: true });
+  await expect(panel).toBeVisible();
+  return panel;
+}
+
+async function closeCategoriesOutside(page, touch = false) {
+  const backdrop = page.getByRole('button', { name: 'Cerrar categorías', exact: true });
+  const bounds = await backdrop.boundingBox();
+  const options = { position: { x: bounds.width - 3, y: bounds.height - 3 } };
+  if (touch) await backdrop.tap(options);
+  else await backdrop.click(options);
+  await expect(page.getByRole('region', { name: 'Menú de categorías', exact: true })).toHaveCount(0);
+}
+
+async function scrollSamples(page, duration = 550) {
+  return page.evaluate(duration => new Promise(resolve => {
+    const started = performance.now();
+    const positions = [];
+    const sample = () => {
+      positions.push(window.scrollY);
+      if (performance.now() - started >= duration) resolve(positions);
+      else requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }), duration);
 }
 
 async function screenshot(page, path) {
@@ -134,11 +174,11 @@ test('desktop browsing, product details, persistent cart, and clearing a consult
   await exerciseQuickSearch(page, true);
   await page.locator('.filter-tabs').getByRole('button', { name: categories.find(item => item.id === 'all').label, exact: true }).click();
   await page.getByRole('combobox', { name: 'Ordenar productos' }).selectOption('price-asc');
-  await expect(page.locator('.product-name')).toHaveText([...products].sort((a, b) => a.price - b.price).map(product => product.name));
+  await expect(page.locator('.product-grid .product-name')).toHaveText([...products].sort((a, b) => a.price - b.price).map(product => product.name));
   await page.getByRole('combobox', { name: 'Ordenar productos' }).selectOption('price-desc');
-  await expect(page.locator('.product-name')).toHaveText([...products].sort((a, b) => b.price - a.price).map(product => product.name));
+  await expect(page.locator('.product-grid .product-name')).toHaveText([...products].sort((a, b) => b.price - a.price).map(product => product.name));
   await page.getByRole('combobox', { name: 'Ordenar productos' }).selectOption('featured');
-  await expect(page.locator('.product-name')).toHaveText(products.map(product => product.name));
+  await expect(page.locator('.product-grid .product-name')).toHaveText(products.map(product => product.name));
 
   if (products.length > 0) {
     const product = products[0];
@@ -215,43 +255,53 @@ test('desktop browsing, product details, persistent cart, and clearing a consult
   await screenshot(page, '/tmp/aura-desktop.png');
 });
 
-test('mobile navigation, cart, and page width', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/');
-  const openMenu = page.getByRole('button', { name: 'Abrir menú' });
-  await expect(openMenu).toBeVisible();
-  await openMenu.click();
-  await expect(page.getByRole('navigation', { name: 'Navegación principal' })).toBeVisible();
-  await page.getByRole('navigation', { name: 'Navegación principal', exact: true }).getByRole('link', { name: 'Impresión 3D', exact: true }).click();
-  await expect(page).toHaveURL(/#impresion-3d$/);
-  await expect(page.locator('#impresion-3d')).toBeVisible();
-  await expect(openMenu).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByRole('navigation', { name: 'Navegación principal', exact: true })).not.toBeVisible();
-  await openMenu.click();
-  await page.getByRole('navigation', { name: 'Navegación principal', exact: true }).getByRole('link', { name: 'Quiénes somos' }).click();
-  await expect(page.getByRole('button', { name: 'Abrir menú' })).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.getByRole('navigation', { name: 'Navegación principal', exact: true })).not.toBeVisible();
-  await exerciseQuickSearch(page);
-  const widths = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: window.innerWidth }));
-  expect(widths.document).toBeLessThanOrEqual(widths.viewport);
+test('mobile categories, touch dismissal, cart, and page width', async ({ browser }) => {
+  const context = await browser.newContext({
+    baseURL: test.info().project.use.baseURL,
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    reducedMotion: 'reduce',
+  });
+  const page = await context.newPage();
+  try {
+    await stubWhatsapp(context);
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: 'Abrir menú', exact: true })).toHaveCount(0);
+    let panel = await openCategories(page);
+    await closeCategoriesOutside(page, true);
+    panel = await openCategories(page);
+    await panel.getByRole('navigation', { name: 'Categorías de la tienda', exact: true }).getByRole('button', { name: 'Impresión 3D', exact: true }).tap();
+    await expect(panel).toHaveCount(0);
+    await expect(page.locator('#impresion-3d')).toBeInViewport();
+    panel = await openCategories(page);
+    await panel.getByRole('button', { name: 'Quiénes somos', exact: true }).tap();
+    await expect(panel).toHaveCount(0);
+    await expect(page.locator('#nosotros')).toBeInViewport();
+    await exerciseQuickSearch(page);
+    const widths = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: window.innerWidth }));
+    expect(widths.document).toBeLessThanOrEqual(widths.viewport);
 
-  let cart;
-  if (cartProduct) {
-    await addButton(page, cartProduct).click();
-    await page.getByRole('button', { name: 'Abrir carrito, 1 productos' }).click();
-    cart = page.getByRole('dialog', { name: 'Tu colección (1)' });
-    await expect(cart.getByRole('link', { name: 'Consultar mi pedido' })).toBeVisible();
-    expect(decodedWhatsapp(await cart.getByRole('link', { name: 'Consultar mi pedido' }).getAttribute('href')))
-      .toContain(`Total de ejemplo: ${formatPrice(cartProduct.price)} CLP`);
-  } else {
-    cart = await expectEmptyCart(page);
+    let cart;
+    if (cartProduct) {
+      await addButton(page, cartProduct).click();
+      await page.getByRole('button', { name: 'Abrir carrito, 1 productos' }).click();
+      cart = page.getByRole('dialog', { name: 'Tu colección (1)' });
+      await expect(cart.getByRole('link', { name: 'Consultar mi pedido' })).toBeVisible();
+      expect(decodedWhatsapp(await cart.getByRole('link', { name: 'Consultar mi pedido' }).getAttribute('href')))
+        .toContain(`Total de ejemplo: ${formatPrice(cartProduct.price)} CLP`);
+    } else {
+      cart = await expectEmptyCart(page);
+    }
+    await expect(cart).toBeVisible();
+    const cartBounds = await cart.boundingBox();
+    expect(cartBounds.x).toBeGreaterThanOrEqual(0);
+    expect(cartBounds.x + cartBounds.width).toBeLessThanOrEqual(390);
+    await page.keyboard.press('Escape');
+    await screenshot(page, '/tmp/aura-mobile.png');
+  } finally {
+    await context.close();
   }
-  await expect(cart).toBeVisible();
-  const cartBounds = await cart.boundingBox();
-  expect(cartBounds.x).toBeGreaterThanOrEqual(0);
-  expect(cartBounds.x + cartBounds.width).toBeLessThanOrEqual(390);
-  await page.keyboard.press('Escape');
-  await screenshot(page, '/tmp/aura-mobile.png');
 });
 
 test('consulting one product clears only that product and preserves other available cart items', async ({ page, context }) => {
@@ -283,25 +333,104 @@ test('consulting one product clears only that product and preserves other availa
   }
 });
 
-test('buyback offers challa and sealed products through WhatsApp and removes market requests', async ({ page, context }) => {
-  const marketRequests = [];
-  page.on('request', request => {
-    if (request.url().includes('api.tcgdex.net')) marketRequests.push(request.url());
-  });
-  await stubWhatsapp(context);
+test('category mega menu previews without filtering, supports keyboard dismissal and selects real products without buyback claims', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('#compramos')).toBeVisible();
-  const challa = page.locator('#compramos').getByRole('link', { name: 'Vender mi challa' });
-  const sealed = page.locator('#compramos').getByRole('link', { name: 'Ofrecer productos sellados' });
-  expect(decodedWhatsapp(await challa.getAttribute('href'))).toMatch(/challa/i);
-  expect(decodedWhatsapp(await sealed.getAttribute('href'))).toMatch(/sellados/i);
-  await openStubbedWhatsapp(page, challa);
-  await openStubbedWhatsapp(page, sealed);
-  await expect(page.getByRole('link', { name: 'Radar TCG' })).toHaveCount(0);
-  await expect(page.locator('#mercado')).toHaveCount(0);
-  await expect(page.locator('main')).not.toContainText('USD');
-  await expect(page.locator('.hero-copy')).not.toContainText('PARA TU LADO COLECCIONISTA');
-  expect(marketRequests).toEqual([]);
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.locator('#compramos')).toHaveCount(0);
+  await expect(page.locator('a[href="#compramos"]')).toHaveCount(0);
+  await expect(page.locator('body')).not.toContainText(/challa|compramos tus cartas/i);
+  await expect(page.getByRole('navigation', { name: 'Departamentos de la tienda', exact: true })).toHaveCount(0);
+  await page.locator('#catalogo').evaluate(element => element.scrollIntoView({ behavior: 'instant', block: 'start' }));
+  const origin = await page.evaluate(() => window.scrollY);
+  const trigger = categoriesTrigger(page);
+  await trigger.evaluate(element => element.focus({ preventScroll: true }));
+  await trigger.press('Enter');
+  const panel = page.getByRole('region', { name: 'Menú de categorías', exact: true });
+  await expect(panel).toBeVisible();
+  await expect(page.locator('.product-grid .product-name')).toHaveText(products.map(product => product.name));
+  expect(Math.abs(await page.evaluate(() => window.scrollY) - origin)).toBeLessThanOrEqual(1);
+  await page.keyboard.press('Tab');
+  await expect(panel.getByRole('button', { name: 'Cerrar menú', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
+  const menuCategories = panel.getByRole('navigation', { name: 'Categorías de la tienda', exact: true });
+  await expect(menuCategories.getByRole('button', { name: 'Ver toda la tienda', exact: true })).toBeFocused();
+  await menuCategories.getByRole('button', { name: 'Cartas', exact: true }).hover();
+  await expect(panel.getByRole('heading', { name: 'Cartas', exact: true })).toBeVisible();
+  await menuCategories.getByRole('button', { name: 'Peluches', exact: true }).focus();
+  await expect(panel.getByRole('heading', { name: 'Peluches y figuras', exact: true })).toBeVisible();
+  await expect(page.locator('.product-grid .product-name')).toHaveText(products.map(product => product.name));
+  expect(Math.abs(await page.evaluate(() => window.scrollY) - origin)).toBeLessThanOrEqual(1);
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await openCategories(page);
+  await closeCategoriesOutside(page);
+
+  let visiblePanel = await openCategories(page);
+  await visiblePanel.getByRole('navigation', { name: 'Categorías de la tienda', exact: true }).getByRole('button', { name: 'Cartas', exact: true }).click();
+  await expect(visiblePanel).toHaveCount(0);
+  await expect(page.locator('.product-grid .product-name')).toHaveText(products.filter(product => product.category === 'cards').map(product => product.name));
+
+  if (products.length > 0) {
+    const product = products.find(item => item.category === 'plush') ?? products[0];
+    const labels = { cards: 'Cartas', sealed: 'Sellados y ETB', plush: 'Peluches', accessories: 'Accesorios' };
+    visiblePanel = await openCategories(page);
+    await visiblePanel.getByRole('navigation', { name: 'Categorías de la tienda', exact: true }).getByRole('button', { name: labels[product.category], exact: true }).hover();
+    await visiblePanel.getByRole('button', { name: product.name, exact: true }).click();
+    await expect(visiblePanel).toHaveCount(0);
+    await expect(page.getByRole('searchbox', { name: 'Buscar productos', exact: true })).toHaveValue(product.name);
+    const matches = products.filter(item => item.category === product.category && normalizeSearch(`${item.name} ${item.categoryLabel} ${item.description}`).includes(normalizeSearch(product.name)));
+    await expect(page.locator('.product-grid .product-name')).toHaveText(matches.map(item => item.name));
+  }
+});
+
+test('typing drafts below the catalog does not filter or scroll, and submitting lands once at stable results', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.locator('.product-grid .product-name')).toHaveText(products.map(product => product.name));
+  const quickInput = page.getByRole('searchbox', { name: 'Buscar productos', exact: true });
+  const candidates = products.length > 0 ? products.slice(0, 2) : [{ name: 'Producto no publicado' }];
+  await page.evaluate(() => {
+    window.scrollTo({ top: document.documentElement.scrollHeight - innerHeight - 120, behavior: 'instant' });
+  });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const origin = await page.evaluate(() => window.scrollY);
+  expect(origin).toBeGreaterThan(0);
+  let navigations = 0;
+  page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations += 1; });
+  await page.evaluate(() => {
+    window.__auraSearchScrolls = [];
+    const originalScroll = window.scrollTo;
+    window.scrollTo = function(...args) {
+      window.__auraSearchScrolls.push(args);
+      return originalScroll.apply(window, args);
+    };
+  });
+
+  let currentProducts = products;
+  for (const [index, candidate] of candidates.entries()) {
+    const start = await page.evaluate(() => window.scrollY);
+    await quickInput.fill('');
+    await quickInput.pressSequentially(candidate.name, { delay: 15 });
+    await expect(page.locator('.product-grid .product-name')).toHaveText(currentProducts.map(item => item.name));
+    const draftPositions = await scrollSamples(page);
+    expect(draftPositions.every(position => Math.abs(position - start) <= 1)).toBe(true);
+    expect(await page.evaluate(() => window.__auraSearchScrolls.length)).toBe(index);
+
+    await quickInput.press('Enter');
+    currentProducts = products.filter(item => normalizeSearch(`${item.name} ${item.categoryLabel} ${item.description}`).includes(normalizeSearch(candidate.name)));
+    await expect(page.locator('.product-grid .product-name')).toHaveText(currentProducts.map(item => item.name));
+    await expect(quickInput).toBeFocused();
+    await expect.poll(() => page.evaluate(() => window.__auraSearchScrolls.length)).toBe(index + 1);
+    const resultPositions = await scrollSamples(page);
+    expect(resultPositions.every(position => Math.abs(position - resultPositions[0]) <= 1)).toBe(true);
+    const target = await page.locator('#catalogo').evaluate(element => ({ top: element.getBoundingClientRect().top, header: document.querySelector('header').getBoundingClientRect().bottom }));
+    expect(target.top).toBeGreaterThanOrEqual(target.header - 1);
+    expect(target.top).toBeLessThanOrEqual(target.header + 48);
+    expect(await page.evaluate(() => window.__auraSearchScrolls.length)).toBe(index + 1);
+  }
+  expect(navigations).toBe(0);
 });
 
 async function submitStubbedCustomQuote(page, form) {
@@ -508,7 +637,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       await page.locator(`.shop-module[data-department="${selectedId}"]`).click();
       const category = categories.find(item => item.id === selectedId);
       const matches = products.filter(product => product.category === selectedId);
-      await expect(page.locator('.product-name')).toHaveText(matches.map(product => product.name));
+      await expect(page.locator('.product-grid .product-name')).toHaveText(matches.map(product => product.name));
       await expect(sidebar.getByRole('button', { name: category.label, exact: true })).toHaveAttribute('aria-pressed', 'true');
     } else {
       const printModule = page.locator('.shop-module[data-department="print"]');
@@ -516,17 +645,34 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       await printModule.click();
       await expect(page).toHaveURL(/#impresion-3d$/);
     }
-    const departments = page.getByRole('navigation', { name: 'Departamentos de la tienda', exact: true });
-    const departmentChoice = { 320: ['sealed', 'Sellados y ETB'], 390: ['plush', 'Peluches'], 768: ['accessories', 'Accesorios'], 1024: ['cards', 'Cartas'], 1440: ['all', 'Toda la tienda'] }[width];
+    const trigger = categoriesTrigger(page);
+    const quickSearch = page.getByRole('search', { name: 'Búsqueda rápida de productos', exact: true });
+    const rowBounds = await page.locator('.header-search-row').boundingBox();
+    const triggerBounds = await trigger.boundingBox();
+    const searchBounds = await quickSearch.boundingBox();
+    expect(rowBounds.x).toBeGreaterThanOrEqual(0);
+    expect(rowBounds.x + rowBounds.width).toBeLessThanOrEqual(width);
+    expect(overlaps(triggerBounds, searchBounds)).toBe(false);
+    expect(triggerBounds.y).toBeLessThan(searchBounds.y + searchBounds.height);
+    expect(searchBounds.y).toBeLessThan(triggerBounds.y + triggerBounds.height);
+    const panel = await openCategories(page);
+    const panelBounds = await panel.boundingBox();
+    expect(panelBounds.x).toBeGreaterThanOrEqual(0);
+    expect(panelBounds.x + panelBounds.width).toBeLessThanOrEqual(width);
+    expect(panelBounds.y).toBeGreaterThanOrEqual(0);
+    expect(panelBounds.y + panelBounds.height).toBeLessThanOrEqual(900);
+    const departments = panel.getByRole('navigation', { name: 'Categorías de la tienda', exact: true });
+    const departmentChoice = { 320: ['sealed', 'Sellados y ETB'], 390: ['plush', 'Peluches'], 768: ['accessories', 'Accesorios'], 1024: ['cards', 'Cartas'], 1440: ['all', 'Ver toda la tienda'] }[width];
     await departments.getByRole('button', { name: departmentChoice[1], exact: true }).click();
-    await expect(departments.getByRole('button', { name: departmentChoice[1], exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(panel).toHaveCount(0);
     const departmentProducts = departmentChoice[0] === 'all' ? products : products.filter(product => product.category === departmentChoice[0]);
-    await expect(page.locator('.product-name')).toHaveText(departmentProducts.map(product => product.name));
+    await expect(page.locator('.product-grid .product-name')).toHaveText(departmentProducts.map(product => product.name));
     await expect(page.getByRole('navigation', { name: 'Ruta del catálogo', exact: true })).toBeVisible();
     if (width === 390 && products.length > 0) {
       const product = products[0];
       const quickInput = page.getByRole('searchbox', { name: 'Buscar productos', exact: true });
       await quickInput.fill(product.name);
+      await quickInput.press('Enter');
       const queryCategories = [categories.find(item => item.id === product.category), categories.find(item => item.id !== 'all' && item.id !== product.category)].filter(Boolean);
       let lastMatches = [];
       for (const category of queryCategories) {
@@ -534,7 +680,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
         await expect(quickInput).toHaveValue(product.name);
         await expect(page.locator('.catalog-current-search')).toContainText(product.name);
         const matches = products.filter(item => item.category === category.id && normalizeSearch(`${item.name} ${item.categoryLabel} ${item.description}`).includes(normalizeSearch(product.name)));
-        await expect(page.locator('.product-name')).toHaveText(matches.map(item => item.name));
+        await expect(page.locator('.product-grid .product-name')).toHaveText(matches.map(item => item.name));
         lastMatches = matches;
       }
       if (queryCategories.length > 0 && lastMatches.length === 0) {
@@ -544,6 +690,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
         await expect(page.locator('.product-card')).toHaveCount(products.length);
       } else {
         await quickInput.fill('');
+        await quickInput.press('Enter');
       }
     }
     await sidebar.getByRole('button', { name: categories.find(item => item.id === 'all').label, exact: true }).click();
@@ -571,25 +718,20 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       expect(control.x + control.width).toBeLessThanOrEqual(formBounds.x + formBounds.width + 1);
       expect(overlaps(label, control)).toBe(false);
     }
-    const nav = page.getByRole('navigation', { name: 'Navegación principal' });
-    if (width <= 1050) {
-      await page.getByRole('button', { name: 'Abrir menú' }).click();
-      await expect(nav).toBeVisible();
-    } else {
-      await expect(page.getByRole('button', { name: 'Abrir menú' })).not.toBeVisible();
-    }
-    const links = await nav.getByRole('link').all();
-    expect(links).toHaveLength(4);
-    const navBounds = await nav.boundingBox();
-    expect(navBounds.x).toBeGreaterThanOrEqual(0);
-    expect(navBounds.x + navBounds.width).toBeLessThanOrEqual(width);
-    const linkBounds = await Promise.all(links.map(link => link.boundingBox()));
-    for (let index = 1; index < linkBounds.length; index += 1) {
-      expect(overlaps(linkBounds[index - 1], linkBounds[index])).toBe(false);
-    }
-    if (width <= 1050) {
-      await nav.getByRole('link', { name: 'Impresión 3D', exact: true }).click();
-      await expect(nav).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Abrir menú', exact: true })).toHaveCount(0);
+    const nav = page.locator('header .navigation');
+    if (width === 1440) await expect(nav).toBeVisible();
+    if (width <= 390) await expect(nav).not.toBeVisible();
+    if (await nav.isVisible()) {
+      const links = await nav.getByRole('link').all();
+      expect(links).toHaveLength(3);
+      const navBounds = await nav.boundingBox();
+      expect(navBounds.x).toBeGreaterThanOrEqual(0);
+      expect(navBounds.x + navBounds.width).toBeLessThanOrEqual(width);
+      const linkBounds = await Promise.all(links.map(link => link.boundingBox()));
+      for (let index = 1; index < linkBounds.length; index += 1) {
+        expect(overlaps(linkBounds[index - 1], linkBounds[index])).toBe(false);
+      }
     }
     const logo = page.locator('header .brand img.brand-logo');
     await expect(logo).toBeVisible();

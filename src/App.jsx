@@ -1,12 +1,12 @@
-import { useEffect, useId, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, Menu, MessageCircle, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, Star, Trash2, X, Zap } from 'lucide-react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, MessageCircle, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, Star, Trash2, X, Zap } from 'lucide-react';
 import { categories, filterProducts, formatPrice, products as demoProducts } from './catalog.js';
 import { hasCatalogConfig, imageUrl, loadProducts } from './catalog-source.js';
 import { addToCart, getCartCount, getCartSubtotal, readCart, removeFromCart, saveCart, updateQuantity } from './cart.js';
 import { whatsappUrl } from './site.config.js';
-import Buyback from './Buyback.jsx';
 import CustomPrints from './CustomPrints.jsx';
-import ShopModules, { DepartmentsNav } from './ShopModules.jsx';
+import ShopModules from './ShopModules.jsx';
+import CategoriesMenu from './CategoriesMenu.jsx';
 
 const imagePath = (path) => imageUrl(path, import.meta.env.BASE_URL);
 const usesDatabase = hasCatalogConfig(import.meta.env);
@@ -66,7 +66,7 @@ function Dialog({ children, onClose, title, className = '' }) {
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKey);
-      previousFocus?.focus();
+      previousFocus?.focus({ preventScroll: true });
     };
   }, []);
   return <div className={`dialog-backdrop ${className}`} onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
@@ -92,16 +92,36 @@ export default function App() {
   const selected = products.find(product => product.id === selectedId) ?? null;
   const [category, setCategory] = useState('all');
   const [query, setQuery] = useState('');
+  const [draftQuery, setDraftQuery] = useState('');
+  const [navigationRequest, setNavigationRequest] = useState(null);
   const [sort, setSort] = useState('featured');
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const catalogHeadingRef = useRef(null);
+  const headerRef = useRef(null);
   const count = getCartCount(cart);
   const subtotal = getCartSubtotal(cart, products);
   const filtered = filterProducts(products, { category, query, sort });
   const activeCategory = categories.find(item => item.id === category) ?? categories[0];
   const catalogTitles = { all: 'Todos los productos', cards: 'Cartas Pokémon', sealed: 'Sellados y ETB', plush: 'Peluches y figuras', accessories: 'Accesorios' };
   const departmentCounts = new Map(categories.map(item => [item.id, filterProducts(products, { category: item.id, query }).length]));
+
+  useLayoutEffect(() => {
+    if (!navigationRequest) return;
+    const section = document.getElementById(navigationRequest.sectionId);
+    if (!section) return;
+    const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 0;
+    const top = Math.max(0, section.getBoundingClientRect().top + window.scrollY - headerHeight - 16);
+    // Use the committed layout once; typing never filters or moves the page.
+    window.scrollTo({ top, behavior: 'instant' });
+    if (navigationRequest.focusHeading) {
+      const heading = section.querySelector('h1, h2');
+      if (heading) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+      }
+    }
+  }, [navigationRequest]);
 
   useEffect(() => {
     if (!usesDatabase) return;
@@ -141,26 +161,37 @@ export default function App() {
     setCart(previous => addToCart(previous, product.id, product.stock));
     setToast({ message: `${product.name} agregado a tu carrito` });
   };
-  const focusCatalogHeading = () => requestAnimationFrame(() => catalogHeadingRef.current?.focus({ preventScroll: true }));
+  const navigateTo = (sectionId, focusHeading = true) => setNavigationRequest({ sectionId, focusHeading });
   const clearSearch = () => {
     setQuery('');
-    scrollToSection('catalogo');
-    focusCatalogHeading();
+    setDraftQuery('');
+    navigateTo('catalogo');
   };
   const chooseCategory = (id) => {
     setCategory(id);
     setQuery('');
+    setDraftQuery('');
     setMenuOpen(false);
-    scrollToSection('catalogo');
-    focusCatalogHeading();
+    navigateTo('catalogo');
+  };
+  const selectMenuProduct = (product) => {
+    setCategory(product.category);
+    setQuery(product.name);
+    setDraftQuery(product.name);
+    setMenuOpen(false);
+    navigateTo('catalogo');
+  };
+  const navigateFromMenu = (sectionId) => {
+    setMenuOpen(false);
+    navigateTo(sectionId);
   };
   const closeMenu = () => setMenuOpen(false);
   const submitQuickSearch = (event) => {
     event.preventDefault();
+    setQuery(draftQuery.trim());
     setCategory('all');
     setMenuOpen(false);
-    scrollToSection('catalogo');
-    focusCatalogHeading();
+    navigateTo('catalogo', false);
   };
   const consult = (productId) => {
     const next = productId ? removeFromCart(cart, productId) : [];
@@ -180,28 +211,28 @@ export default function App() {
     </div>
     <a className="skip-link" href="#catalogo">Saltar al catálogo</a>
     <div className="announcement"><span><Zap size={13} fill="currentColor" /> Pokémon e impresión 3D a tu medida.</span><span className="announcement-right">POKÉMON. IMPRESIÓN 3D. A MEDIDA. <Sparkles size={13} /></span></div>
-    <header className="header">
+    <header className={menuOpen ? 'header categories-open' : 'header'} ref={headerRef}>
       <div className="nav-wrap container">
         <a className="brand" href="#inicio" aria-label="Aura TCG & Print, inicio"><span className="brand-wordmark"><img className="brand-logo" src={imagePath('/images/aura-logo.png')} alt="Aura TCG & Print" /></span></a>
-        <nav className={menuOpen ? 'navigation open' : 'navigation'} aria-label="Navegación principal">
+        <nav className="navigation" aria-label="Navegación principal">
           <a href="#impresion-3d" onClick={closeMenu}>Impresión 3D</a>
           <a href="#catalogo" onClick={closeMenu}>Tienda</a>
-          <a href="#compramos" onClick={closeMenu}>Compramos tus cartas</a>
           <a href="#nosotros" onClick={closeMenu}>Quiénes somos</a>
         </nav>
         <div className="nav-actions">
-          <button className="cart-button" onClick={() => { setToast(null); setCartOpen(true); }} disabled={!catalogReady} aria-label={`Abrir carrito, ${count} productos`}><ShoppingBag size={19} /><span>Mi carrito</span><b>{count}</b></button>
-          <button className="icon-button mobile-menu" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
+          <button className="cart-button" onClick={() => { setMenuOpen(false); setToast(null); setCartOpen(true); }} disabled={!catalogReady} aria-label={`Abrir carrito, ${count} productos`}><ShoppingBag size={19} /><span>Mi carrito</span><b>{count}</b></button>
         </div>
       </div>
-      <form className="quick-search container" role="search" aria-label="Búsqueda rápida de productos" onSubmit={submitQuickSearch}>
+      <div className="header-search-row container">
+      <CategoriesMenu open={menuOpen} onOpenChange={setMenuOpen} activeCategory={category} products={products} isDemo={isDemo} onSelectCategory={chooseCategory} onSelectProduct={selectMenuProduct} onNavigateSection={navigateFromMenu} />
+      <form className="quick-search" role="search" aria-label="Búsqueda rápida de productos" onSubmit={submitQuickSearch}>
         <Search size={22} aria-hidden="true" />
         <label className="sr-only" htmlFor="quick-search">Buscar productos</label>
-        <input id="quick-search" type="search" value={query} onChange={event => { setQuery(event.target.value); setCategory('all'); }} placeholder="Busca cartas, peluches, ETB…" />
+        <input id="quick-search" type="search" value={draftQuery} onChange={event => setDraftQuery(event.target.value)} placeholder="Busca cartas, peluches, ETB…" />
         <button className="quick-search-button" type="submit">Buscar <ArrowRight size={18} /></button>
       </form>
+      </div>
     </header>
-    <DepartmentsNav activeCategory={category} onSelect={chooseCategory} />
 
     <main>
       <section className="hero hero-custom hero-aura container" id="inicio">
@@ -262,8 +293,6 @@ export default function App() {
 
       <CustomPrints />
 
-      <Buyback />
-
       <section className="about-section container" id="nosotros" aria-labelledby="about-title">
         <div className="about-art"><div className="about-outline">TCG<br />{' '}+ 3D.</div><img src={imagePath('/images/gengar.png')} alt="Gengar" loading="lazy" /><div className="about-badge"><Heart size={23} /><span>DE FANS<br />{' '}<strong>PARA FANS</strong></span></div><Sparkles size={34} className="about-spark" /></div>
         <div className="about-copy"><span className="eyebrow">HOLA, SOMOS AURA <span className="wave" aria-hidden="true">✌️</span></span><h2>Pokémon y diseño<br />{' '}pensados para<br />{' '}<span>tu colección.</span></h2><p>Nos gustan Pokémon y las colecciones bien cuidadas. Por eso reunimos productos TCG y accesorios hechos con impresión 3D a medida.</p><p>Creamos cajas, organizadores y soportes según el formato de tus cartas y sus fundas. Conversemos sobre tus medidas, colores e ideas para definir una pieza que se adapte a ti.</p><a className="text-link" href={whatsappUrl('¡Hola, Aura! Me gustaría conocer más sobre la tienda.')} target="_blank" rel="noreferrer">Conversemos de Pokémon <span><ArrowUpRight size={17} /></span></a></div>
@@ -272,7 +301,7 @@ export default function App() {
       <section className="contact-banner container"><div><span className="eyebrow">TÚ PREGUNTA. NOSOTROS TE AYUDAMOS.</span><h2>¿Una duda? <span>¡Te leemos!</span><span className="chat-emoji" aria-hidden="true">💬</span></h2><p>Consulta por productos Pokémon o cuéntanos qué pieza 3D necesitas.</p></div><a className="button button-dark" href={whatsappUrl('¡Hola, Aura! Quisiera consultar por productos Pokémon o cotizar una pieza de impresión 3D a medida.')} target="_blank" rel="noreferrer"><MessageCircle size={19} /> Escríbenos por WhatsApp <ArrowUpRight size={18} /></a></section>
     </main>
 
-    <footer className="footer"><div className="container footer-top"><a className="brand" href="#inicio"><img className="brand-logo" src={imagePath('/images/aura-logo.png')} alt="Aura TCG & Print" /></a><p>Pokémon e impresión 3D.<br />{' '}Accesorios a tu medida.</p><div className="footer-links"><a href="#impresion-3d">Impresión 3D</a><a href="#catalogo">La tienda</a><a href="#compramos">Compramos tus cartas</a><a href="#nosotros">Nuestra historia</a><a href={whatsappUrl('¡Hola, Aura! Quisiera hacer una consulta.')} target="_blank" rel="noreferrer">Contacto <ArrowUpRight size={13} /></a></div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} Aura TCG & Print.<span className="footer-credit">Creado por <strong>paujnarvaez</strong> con <span className="credit-heart" role="img" aria-label="amor">♥</span></span></span><span className="footer-legal">Todos los derechos reservados sobre el contenido propio de Aura. Las marcas, personajes e imágenes de Pokémon pertenecen a sus respectivos titulares. Aura TCG & Print es una tienda independiente, sin afiliación oficial con Pokémon.</span></div></footer>
+    <footer className="footer"><div className="container footer-top"><a className="brand" href="#inicio"><img className="brand-logo" src={imagePath('/images/aura-logo.png')} alt="Aura TCG & Print" /></a><p>Pokémon e impresión 3D.<br />{' '}Accesorios a tu medida.</p><div className="footer-links"><a href="#impresion-3d">Impresión 3D</a><a href="#catalogo">La tienda</a><a href="#nosotros">Nuestra historia</a><a href={whatsappUrl('¡Hola, Aura! Quisiera hacer una consulta.')} target="_blank" rel="noreferrer">Contacto <ArrowUpRight size={13} /></a></div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} Aura TCG & Print.<span className="footer-credit">Creado por <strong>paujnarvaez</strong> con <span className="credit-heart" role="img" aria-label="amor">♥</span></span></span><span className="footer-legal">Todos los derechos reservados sobre el contenido propio de Aura. Las marcas, personajes e imágenes de Pokémon pertenecen a sus respectivos titulares. Aura TCG & Print es una tienda independiente, sin afiliación oficial con Pokémon.</span></div></footer>
     <a className="floating-whatsapp" href={whatsappUrl('¡Hola, Aura! Quisiera consultar por Pokémon o impresión 3D a medida.')} target="_blank" rel="noreferrer" aria-label="Consultar precios por WhatsApp"><MessageCircle size={25} /><span>¿Hablamos?</span><span className="whatsapp-dot" /></a>
     <div className={toast ? 'toast visible' : 'toast'} role="status" aria-live="polite">{toast && <><span><Check size={17} /></span>{toast.message}<button className="icon-button" aria-label="Cerrar aviso" onClick={() => setToast(null)}><X size={16} /></button></>}</div>
 

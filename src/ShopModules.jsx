@@ -1,27 +1,12 @@
 import { ArrowUpRight, Box, WalletCards } from 'lucide-react';
 import { imageUrl } from './catalog-source.js';
 
-const departments = [
+export const shopDepartments = [
   { id: 'cards', label: 'Cartas', title: 'Cartas', description: 'Para jugar y coleccionar' },
   { id: 'sealed', label: 'Sellados y ETB', title: 'Sellados y ETB', description: 'Sobres y cajas selladas' },
   { id: 'plush', label: 'Peluches', title: 'Peluches y figuras', description: 'Tus personajes Pokémon' },
   { id: 'accessories', label: 'Accesorios', title: 'Accesorios', description: 'Para guardar tus cartas' },
 ];
-
-export function DepartmentsNav({ activeCategory, onSelect }) {
-  return <nav className="departments-nav" aria-label="Departamentos de la tienda">
-    <div className="container departments-links">
-      <button type="button" onClick={() => onSelect('all')} aria-pressed={activeCategory === 'all'}>Toda la tienda</button>
-      {departments.map(department => <button
-        type="button"
-        key={department.id}
-        onClick={() => onSelect(department.id)}
-        aria-pressed={activeCategory === department.id}
-      >{department.label}</button>)}
-      <a href="#impresion-3d">Impresión 3D</a>
-    </div>
-  </nav>;
-}
 
 function DepartmentArt({ id }) {
   if (id === 'cards') return <img src={imageUrl('/images/charizard-card.webp', import.meta.env.BASE_URL)} alt="" loading="lazy" />;
@@ -46,7 +31,7 @@ export default function ShopModules({ onSelect }) {
       <p>Productos Pokémon y piezas 3D a medida.</p>
     </div>
     <div className="shop-module-grid">
-      {departments.map(department => <button
+      {shopDepartments.map(department => <button
         type="button"
         className={`shop-module module-${department.id}`}
         data-department={department.id}

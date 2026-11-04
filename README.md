@@ -13,7 +13,7 @@ Para desarrollar la página, uso:
 
 ## 🛍️ Qué estoy incorporando
 
-Incluyo un catálogo Pokémon, un carrito de consulta y una sección para cotizar piezas 3D según el formato de las cartas, sus medidas y el color elegido. También compro challa y productos sellados.
+Incluyo un catálogo Pokémon, un carrito de consulta y una sección para cotizar piezas 3D según el formato de las cartas, sus medidas y el color elegido.
 
 Preparé la conexión del catálogo a **PostgreSQL en Neon**, mediante un servidor en Node.js. Mientras no la configure, uso productos y precios de ejemplo. Coordino las consultas por WhatsApp, sin pagos dentro de la página.
 

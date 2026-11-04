@@ -39,14 +39,14 @@ Si un dato está por definir, indícalo. Los precios y existencias de ejemplo no
 | Qué quieres cambiar | Archivo o carpeta |
 | --- | --- |
 | Productos, precios y existencias de muestra | `src/catalog.js` |
-| Módulos de categorías y navegación de departamentos | `src/ShopModules.jsx` |
+| Módulos visuales de categorías | `src/ShopModules.jsx` |
+| Menú desplegable de categorías, departamentos y buscador del encabezado | `src/CategoriesMenu.jsx` |
 | Productos reales al activar Neon | Tabla `products` de Neon; [guía](database/README.md) |
 | Fotos de los productos y recursos de la página | `public/images/`, o una URL HTTPS de la foto |
 | Conexión privada a la base de datos | `.env.local`, a partir de `.env.example`; no se sube a GitHub |
 | Servidor que consulta los productos publicados | `server/` |
 | Número de WhatsApp | `src/site.config.js` |
 | Portada, textos del catálogo, Quiénes somos y pie de página | `src/App.jsx` |
-| Textos y mensajes de la sección de compra de challa y sellados | `src/Buyback.jsx` |
 | Servicios y formulario de cotización de impresión 3D a medida | `src/CustomPrints.jsx` |
 | Colores, tamaños, tarjetas, fondo y animaciones | `src/styles.css` |
 | Logo de Aura e icono de la pestaña | Logo en `public/images/`; icono en `public/favicon.svg` |
@@ -155,7 +155,7 @@ Este ejemplo utiliza un precio y una cantidad ficticios. Reemplázalos y copia p
 
 Los productos se muestran inicialmente en el orden de la lista. Mueve un bloque más arriba para que aparezca antes en «Destacados».
 
-Para crear una categoría nueva, dime su nombre y qué productos incluirá. Además del filtro, hay que ajustar los módulos y la navegación de departamentos en `src/ShopModules.jsx`. Los títulos del catálogo se definen en `src/App.jsx`.
+Para crear una categoría nueva, dime su nombre y qué productos incluirá. Además del filtro, hay que ajustar los módulos en `src/ShopModules.jsx` y el menú de departamentos en `src/CategoriesMenu.jsx`. Los títulos del catálogo se definen en `src/App.jsx`.
 
 ### Cambiar una foto o un precio
 
@@ -222,7 +222,7 @@ whatsapp: '56998716582',
 
 Usa el código de país y el número completo, solamente con dígitos: sin `+`, espacios ni guiones. Ese valor actualiza los enlaces de atención de toda la tienda.
 
-Los mensajes preparados para consultas de productos y pedidos están en `src/App.jsx`; los mensajes para ofrecer challa o sellados están en `src/Buyback.jsx`.
+Los mensajes preparados para consultas de productos y pedidos están en `src/App.jsx`.
 
 ### Impresión 3D a medida
 
@@ -235,8 +235,6 @@ Estos servicios no se agregan al carrito ni tienen un precio fijo en el catálog
 ### Portada, Quiénes somos y pie de página
 
 Busca el texto que quieres cambiar en `src/App.jsx`. Puedes reemplazar las palabras conservando las etiquetas y la estructura del archivo. Por ejemplo, el texto «Hecho con ❤️» está en el pie de página de ese archivo.
-
-En `src/Buyback.jsx` puedes editar las explicaciones y botones de «Compramos tu challa y productos sellados».
 
 El nombre visible de la marca está escrito en `src/App.jsx`. Cambiar únicamente `name` en `src/site.config.js` no lo reemplaza en los textos ni en los mensajes.
 
@@ -265,7 +263,9 @@ Los estilos están en `src/styles.css`. Los colores principales se declaran al c
 
 El fondo animado utiliza `.animated-background` y `.background-orb` para los colores suaves, y `.background-glint` para los brillitos. Su posición, tamaño y ritmo se definen en `backgroundGlints`, al comienzo de `src/App.jsx`; sus formas y animaciones están en `src/styles.css`. Las reglas al final para `prefers-reduced-motion` respetan la preferencia de quienes necesitan menos movimiento.
 
-Los cinco módulos de categorías usan `.shop-module-grid` y `.shop-module`, con espacios para imagen y texto. Para modificar tamaños o columnas, conserva las reglas de móvil y tablet y revisa el resultado en distintos anchos. El buscador aparece una sola vez, en el encabezado; los filtros de categoría y la ordenación están junto a los productos.
+Los cinco módulos de categorías usan `.shop-module-grid` y `.shop-module`, con espacios para imagen y texto. Para modificar tamaños o columnas, conserva las reglas de móvil y tablet y revisa el resultado en distintos anchos.
+
+La barra del encabezado reúne los departamentos y un único buscador dentro del menú desplegable de categorías, definido en `src/CategoriesMenu.jsx`. No hay una barra de departamentos adicional. Escribir en el campo prepara la consulta; los productos cambian al pulsar **Buscar** o **Enter**. Los filtros de categoría y la ordenación están junto a los productos, y conservan la búsqueda aplicada.
 
 También puedes pedirme el cambio con palabras sencillas: «quiero más azul», «el texto está muy pequeño» o «esta foto se ve cortada», acompañando una captura si ayuda.
 
