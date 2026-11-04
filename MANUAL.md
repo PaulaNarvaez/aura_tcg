@@ -39,6 +39,7 @@ Si un dato está por definir, indícalo. Los precios y existencias de ejemplo no
 | Qué quieres cambiar | Archivo o carpeta |
 | --- | --- |
 | Productos, precios y existencias de muestra | `src/catalog.js` |
+| Módulos de categorías y navegación de departamentos | `src/ShopModules.jsx` |
 | Productos reales al activar Neon | Tabla `products` de Neon; [guía](database/README.md) |
 | Fotos de los productos y recursos de la página | `public/images/`, o una URL HTTPS de la foto |
 | Conexión privada a la base de datos | `.env.local`, a partir de `.env.example`; no se sube a GitHub |
@@ -154,7 +155,7 @@ Este ejemplo utiliza un precio y una cantidad ficticios. Reemplázalos y copia p
 
 Los productos se muestran inicialmente en el orden de la lista. Mueve un bloque más arriba para que aparezca antes en «Destacados».
 
-Para crear una categoría nueva, dime su nombre y qué productos incluirá. Además del filtro, hay que ajustar las tarjetas de categorías de la portada, que están en `src/App.jsx`.
+Para crear una categoría nueva, dime su nombre y qué productos incluirá. Además del filtro, hay que ajustar los módulos y la navegación de departamentos en `src/ShopModules.jsx`. Los títulos del catálogo se definen en `src/App.jsx`.
 
 ### Cambiar una foto o un precio
 
@@ -264,7 +265,7 @@ Los estilos están en `src/styles.css`. Los colores principales se declaran al c
 
 El fondo animado utiliza `.animated-background` y `.background-orb` para los colores suaves, y `.background-glint` para los brillitos. Su posición, tamaño y ritmo se definen en `backgroundGlints`, al comienzo de `src/App.jsx`; sus formas y animaciones están en `src/styles.css`. Las reglas al final para `prefers-reduced-motion` respetan la preferencia de quienes necesitan menos movimiento.
 
-Las tarjetas de categorías utilizan espacios separados para índice, texto e imagen. Para modificar tamaños o columnas, conserva las reglas de móvil y tablet y revisa el resultado en distintos anchos.
+Los cinco módulos de categorías usan `.shop-module-grid` y `.shop-module`, con espacios para imagen y texto. Para modificar tamaños o columnas, conserva las reglas de móvil y tablet y revisa el resultado en distintos anchos. El buscador aparece una sola vez, en el encabezado; los filtros de categoría y la ordenación están junto a los productos.
 
 También puedes pedirme el cambio con palabras sencillas: «quiero más azul», «el texto está muy pequeño» o «esta foto se ve cortada», acompañando una captura si ayuda.
 

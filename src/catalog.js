@@ -1,5 +1,5 @@
 export const categories = [
-  { id: 'all', label: 'Todo el universo' },
+  { id: 'all', label: 'Ver todo' },
   { id: 'cards', label: 'Cartas' },
   { id: 'sealed', label: 'Sellados & ETB' },
   { id: 'plush', label: 'Peluches' },

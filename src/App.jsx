@@ -1,14 +1,22 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, Box, ArrowUpRight, Check, ChevronDown, Heart, Menu, MessageCircle, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, Star, Trash2, X, Zap } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, Menu, MessageCircle, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, Star, Trash2, X, Zap } from 'lucide-react';
 import { categories, filterProducts, formatPrice, products as demoProducts } from './catalog.js';
 import { hasCatalogConfig, imageUrl, loadProducts } from './catalog-source.js';
 import { addToCart, getCartCount, getCartSubtotal, readCart, removeFromCart, saveCart, updateQuantity } from './cart.js';
 import { whatsappUrl } from './site.config.js';
 import Buyback from './Buyback.jsx';
 import CustomPrints from './CustomPrints.jsx';
+import ShopModules, { DepartmentsNav } from './ShopModules.jsx';
 
 const imagePath = (path) => imageUrl(path, import.meta.env.BASE_URL);
 const usesDatabase = hasCatalogConfig(import.meta.env);
+
+function scrollToSection(id) {
+  document.getElementById(id)?.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'start',
+  });
+}
 const backgroundGlints = Array.from({ length: 24 }, (_, index) => ({
   id: index,
   style: {
@@ -87,10 +95,13 @@ export default function App() {
   const [sort, setSort] = useState('featured');
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState(null);
-  const searchRef = useRef(null);
+  const catalogHeadingRef = useRef(null);
   const count = getCartCount(cart);
   const subtotal = getCartSubtotal(cart, products);
   const filtered = filterProducts(products, { category, query, sort });
+  const activeCategory = categories.find(item => item.id === category) ?? categories[0];
+  const catalogTitles = { all: 'Todos los productos', cards: 'Cartas Pokémon', sealed: 'Sellados y ETB', plush: 'Peluches y figuras', accessories: 'Accesorios' };
+  const departmentCounts = new Map(categories.map(item => [item.id, filterProducts(products, { category: item.id, query }).length]));
 
   useEffect(() => {
     if (!usesDatabase) return;
@@ -130,14 +141,26 @@ export default function App() {
     setCart(previous => addToCart(previous, product.id, product.stock));
     setToast({ message: `${product.name} agregado a tu carrito` });
   };
-  const chooseCategory = (id) => { setCategory(id); setQuery(''); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); };
+  const focusCatalogHeading = () => requestAnimationFrame(() => catalogHeadingRef.current?.focus({ preventScroll: true }));
+  const clearSearch = () => {
+    setQuery('');
+    scrollToSection('catalogo');
+    focusCatalogHeading();
+  };
+  const chooseCategory = (id) => {
+    setCategory(id);
+    setQuery('');
+    setMenuOpen(false);
+    scrollToSection('catalogo');
+    focusCatalogHeading();
+  };
   const closeMenu = () => setMenuOpen(false);
   const submitQuickSearch = (event) => {
     event.preventDefault();
     setCategory('all');
     setMenuOpen(false);
-    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' });
-    searchRef.current?.focus({ preventScroll: true });
+    scrollToSection('catalogo');
+    focusCatalogHeading();
   };
   const consult = (productId) => {
     const next = productId ? removeFromCart(cart, productId) : [];
@@ -162,7 +185,7 @@ export default function App() {
         <a className="brand" href="#inicio" aria-label="Aura TCG & Print, inicio"><span className="brand-wordmark"><img className="brand-logo" src={imagePath('/images/aura-logo.png')} alt="Aura TCG & Print" /></span></a>
         <nav className={menuOpen ? 'navigation open' : 'navigation'} aria-label="Navegación principal">
           <a href="#impresion-3d" onClick={closeMenu}>Impresión 3D</a>
-          <a href="#catalogo" onClick={closeMenu}>Explorar tienda <ChevronDown size={12} /></a>
+          <a href="#catalogo" onClick={closeMenu}>Tienda</a>
           <a href="#compramos" onClick={closeMenu}>Compramos tus cartas</a>
           <a href="#nosotros" onClick={closeMenu}>Quiénes somos</a>
         </nav>
@@ -178,6 +201,7 @@ export default function App() {
         <button className="quick-search-button" type="submit">Buscar <ArrowRight size={18} /></button>
       </form>
     </header>
+    <DepartmentsNav activeCategory={category} onSelect={chooseCategory} />
 
     <main>
       <section className="hero hero-custom hero-aura container" id="inicio">
@@ -201,38 +225,28 @@ export default function App() {
 
       <div className="ticker" aria-hidden="true"><div>{Array.from({ length: 4 }, (_, i) => <span key={i}>POKÉMON + IMPRESIÓN 3D <Sparkles size={18} /> ACCESORIOS A MEDIDA <Pokeball /> ORGANIZA TU COLECCIÓN <Star size={18} /></span>)}</div></div>
 
-      <section className="category-section container" aria-labelledby="category-title">
-        <div className="section-intro"><div><span className="eyebrow">POKÉMON Y ACCESORIOS PARA TUS CARTAS</span><h2 id="category-title">Encuentra tu tipo.</h2></div><p>Productos para coleccionar.<br />{' '}Diseños pensados para ti.</p></div>
-        <div className="category-grid">
-          <button className="category-tile category-cards" onClick={() => chooseCategory('cards')}><span className="tile-index">01 / TCG</span><div className="tile-copy"><h3>Cartas<br />{' '}individuales</h3><span className="circle-arrow"><ArrowUpRight size={21} /></span></div><div className="tile-visual" aria-hidden="true"><img src={imagePath('/images/charizard-card.webp')} alt="" /></div></button>
-          <button className="category-tile category-sealed" onClick={() => chooseCategory('sealed')}><span className="tile-index">02 / LA SORPRESA</span><div className="tile-copy"><h3>Productos<br />{' '}sellados</h3><span className="circle-arrow"><ArrowUpRight size={21} /></span></div><div className="tile-visual" aria-hidden="true"><div className="tile-package"><Pokeball /><span>TCG</span></div></div></button>
-          <button className="category-tile category-plush" onClick={() => chooseCategory('plush')}><span className="tile-index">03 / COMPAÑEROS</span><div className="tile-copy"><h3>Peluches<br />{' '}& figuras</h3><span className="circle-arrow"><ArrowUpRight size={21} /></span></div><div className="tile-visual" aria-hidden="true"><img src={imagePath('/images/eevee.png')} alt="" /></div></button>
-          <a className="category-tile category-custom-print" href="#impresion-3d"><span className="tile-index">04 / A TU MEDIDA</span><div className="tile-copy"><h3>Impresiones<br />{' '}3D a medida</h3><span className="circle-arrow"><ArrowUpRight size={21} /></span></div><div className="tile-visual" aria-hidden="true"><div className="tile-3d"><Box size={42} strokeWidth={1.4} /><span>3D</span></div></div></a>
-        </div>
-      </section>
-
-      <CustomPrints />
+      <ShopModules onSelect={chooseCategory} />
 
       <section className="catalog-section container" id="catalogo" aria-labelledby="catalog-title">
-        <div className="section-intro"><div><span className="eyebrow"><Sparkles size={14} /> EXPLORA NUESTRO CATÁLOGO POKÉMON</span><h2 id="catalog-title">Pokémon para tu colección<span className="heading-dot">.</span></h2></div><span className="catalog-label">{isDemo ? 'CATÁLOGO DE MUESTRA' : 'CATÁLOGO AURA'}</span></div>
+        <nav className="catalog-breadcrumb" aria-label="Ruta del catálogo"><button type="button" onClick={() => scrollToSection('inicio')}>Inicio</button><span aria-hidden="true">/</span><button type="button" onClick={() => chooseCategory('all')}>Tienda</button>{category !== 'all' && <><span aria-hidden="true">/</span><span aria-current="page">{activeCategory.label}</span></>}</nav>
+        <div className="section-intro"><div><span className="eyebrow">TIENDA AURA</span><h2 id="catalog-title" ref={catalogHeadingRef} tabIndex={-1}>{catalogTitles[category] ?? activeCategory.label}<span className="heading-dot">.</span></h2></div><span className="catalog-label">{isDemo ? 'CATÁLOGO DE MUESTRA' : 'CATÁLOGO AURA'}</span></div>
         <p className="demo-notice">{isDemo ? 'Estamos preparando la tienda. Precios y existencias de ejemplo, con imágenes referenciales; consulta los valores vigentes por WhatsApp.' : 'Consulta la disponibilidad, el valor final y el envío por WhatsApp.'}</p>
-        <div className="catalog-controls">
-          <form className="catalog-search-panel" role="search" aria-label="Buscar en el catálogo" onSubmit={event => { event.preventDefault(); document.getElementById('catalog-results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
-            <label className="catalog-search-label" htmlFor="catalog-search">¿Qué estás buscando?</label>
-            <div className="catalog-search-row">
-              <label className="search-field"><Search size={22} aria-hidden="true" /><input id="catalog-search" ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Busca cartas, peluches, ETB y accesorios…" aria-label="Buscar en el catálogo" aria-describedby="catalog-search-help" /></label>
-              <button className="button button-dark catalog-search-button" type="submit">Buscar <Search size={19} /></button>
+        <div className="catalog-layout">
+          <aside className="catalog-sidebar" aria-labelledby="catalog-departments-title">
+            <h3 id="catalog-departments-title">Categorías</h3>
+            <div className="filter-tabs" aria-label="Categorías de productos">{categories.map(item => <button type="button" key={item.id} onClick={() => setCategory(item.id)} aria-label={item.label} aria-pressed={category === item.id} className={category === item.id ? 'active' : ''}><span>{item.label}</span>{catalogReady && <span className="department-count" aria-hidden="true">{departmentCounts.get(item.id)}</span>}</button>)}</div>
+            <a className="sidebar-custom-print" href="#impresion-3d"><Sparkles size={18} /> Impresión 3D a medida <ArrowUpRight size={16} /></a>
+          </aside>
+          <div className="catalog-content">
+            <div className="catalog-toolbar">
+              <div className="catalog-summary">
+                {catalogReady && <p className="result-count" id="catalog-results" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'producto' : 'productos'}</p>}
+                {query.trim() && <div className="catalog-current-search"><p>Resultados para <strong>“{query.trim()}”</strong></p><button className="clear-search" type="button" onClick={clearSearch} aria-label="Quitar búsqueda"><X size={16} aria-hidden="true" /> Quitar búsqueda</button></div>}
+              </div>
+              <label className="sort-field"><span className="sr-only">Ordenar productos</span><select value={sort} onChange={event => setSort(event.target.value)}><option value="featured">Destacados</option><option value="price-asc">Menor precio</option><option value="price-desc">Mayor precio</option></select><ChevronDown size={14} /></label>
             </div>
-            <p className="catalog-search-help" id="catalog-search-help">Busca por nombre de producto, Pokémon o edición.</p>
-          </form>
-          <div className="catalog-filter-row">
-            <div className="filter-tabs" aria-label="Categorías de productos">{categories.map(item => <button key={item.id} onClick={() => setCategory(item.id)} aria-pressed={category === item.id} className={category === item.id ? 'active' : ''}>{item.label}</button>)}</div>
-            <label className="sort-field"><span className="sr-only">Ordenar productos</span><select value={sort} onChange={event => setSort(event.target.value)}><option value="featured">Destacados</option><option value="price-asc">Menor precio</option><option value="price-desc">Mayor precio</option></select><ChevronDown size={14} /></label>
-          </div>
-        </div>
         {catalog.status === 'loading' && <div className="catalog-status" role="status"><Sparkles size={25} /><p>Cargando productos…</p></div>}
         {catalog.status === 'error' && <div className="catalog-status" role="alert"><p>No pudimos cargar el catálogo.</p><span>Puedes intentarlo otra vez o consultar los productos por WhatsApp.</span><button className="button button-dark" onClick={() => setLoadAttempt(attempt => attempt + 1)}>Reintentar <ArrowRight size={16} /></button></div>}
-        {catalogReady && <p className="result-count" id="catalog-results" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'favorito por descubrir' : 'favoritos por descubrir'}</p>}
         <div className="product-grid" aria-busy={catalog.status === 'loading'}>{filtered.map(product => <article className="product-card" key={product.id}>
           <button className={`product-image tone-${product.tone}`} onClick={() => setSelectedId(product.id)} aria-label={`Ver detalles de ${product.name}`}>
             {product.badge && <span className="product-badge">{product.badge === 'Favorito' && <Star size={11} fill="currentColor" />} {product.badge}</span>}
@@ -240,9 +254,13 @@ export default function App() {
           </button>
           <div className="product-info"><span className="product-category">{product.categoryLabel}</span><button className="product-name" onClick={() => setSelectedId(product.id)}>{product.name}</button><div className="product-bottom"><div><strong>{formatPrice(product.price)} <small>CLP</small></strong><span>{product.stock === 0 ? 'Agotado' : isDemo ? 'Precio de ejemplo' : 'Precio en CLP'}</span></div><button className="add-button" onClick={() => add(product)} disabled={product.stock === 0} aria-label={`Agregar ${product.name} al carrito`}><Plus size={20} /></button></div></div>
         </article>)}</div>
-        {catalogReady && filtered.length === 0 && <div className="empty-search"><Search size={32} /><h3>{products.length === 0 ? 'Estamos preparando nuevos productos.' : 'Ese Pokémon se nos escondió.'}</h3><p>{products.length === 0 ? 'Mientras tanto, puedes consultar por WhatsApp o cotizar una impresión 3D.' : 'Prueba otra búsqueda o explora todas las categorías.'}</p>{products.length > 0 && <button className="button button-dark" onClick={() => { setQuery(''); setCategory('all'); }}>Ver todos los productos <ArrowRight size={16} /></button>}</div>}
+        {catalogReady && filtered.length === 0 && <div className="empty-search"><Search size={32} /><h3>{products.length === 0 ? 'Estamos preparando nuevos productos.' : 'Ese Pokémon se nos escondió.'}</h3><p>{products.length === 0 ? 'Mientras tanto, puedes consultar por WhatsApp o cotizar una impresión 3D.' : 'Prueba otra búsqueda o explora todas las categorías.'}</p>{products.length > 0 && <button className="button button-dark" onClick={() => chooseCategory('all')}>Ver todos los productos <ArrowRight size={16} /></button>}</div>}
+          </div>
+        </div>
         <div className="catalog-bottom"><span><MessageCircle size={17} /> ¿Quieres un accesorio con tus medidas? Cuéntanos tu idea.</span><a href={whatsappUrl('¡Hola, Aura! Quisiera consultar por un producto Pokémon o un accesorio de impresión 3D a medida.')} target="_blank" rel="noreferrer">Hablemos por WhatsApp <ArrowUpRight size={17} /></a></div>
       </section>
+
+      <CustomPrints />
 
       <Buyback />
 
@@ -262,7 +280,7 @@ export default function App() {
 
     {cartOpen && <Dialog onClose={() => setCartOpen(false)} title={`Tu colección (${count})`} className="cart-dialog">
       <p className="cart-note">Arma tu consulta. El carrito se vacía al abrir el pedido en WhatsApp.</p>
-      {cart.length === 0 ? <div className="cart-empty"><div><ShoppingBag size={43} strokeWidth={1.3} /><Sparkles size={21} /></div><h3>Una aventura por llenar.</h3><p>Tu próxima colección comienza<br />{' '}con un pequeño favorito.</p><button className="button button-dark" onClick={() => { setCartOpen(false); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}>Explorar la tienda <ArrowRight size={17} /></button></div> : <><div className="cart-items">{cart.map(item => { const product = products.find(p => p.id === item.productId); if (!product) return null; return <article className="cart-item" key={item.productId}><div className={`cart-item-art tone-${product.tone}`}><ProductArt product={product} /></div><div className="cart-item-info"><span>{product.categoryLabel}</span><h3>{product.name}</h3><strong>{formatPrice(product.price)} CLP</strong><div className="quantity-controls"><button aria-label={`Reducir cantidad de ${product.name}`} onClick={() => setCart(previous => updateQuantity(previous, product.id, item.quantity - 1, product.stock))}><Minus size={13} /></button><span aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span><button aria-label={`Aumentar cantidad de ${product.name}`} disabled={item.quantity >= product.stock} onClick={() => setCart(previous => updateQuantity(previous, product.id, item.quantity + 1, product.stock))}><Plus size={13} /></button></div></div><button className="remove-item icon-button" aria-label={`Eliminar ${product.name}`} onClick={() => setCart(previous => removeFromCart(previous, product.id))}><Trash2 size={17} /></button></article>; })}</div><div className="cart-summary"><div><span>{isDemo ? 'Subtotal de ejemplo' : 'Subtotal'}</span><strong>{formatPrice(subtotal)} CLP</strong></div><p>{isDemo ? 'Los precios y el stock son demostrativos. El valor final, la disponibilidad y el envío se confirman por WhatsApp.' : 'El valor final, la disponibilidad y el envío se confirman por WhatsApp.'}</p><a className="button button-dark" href={whatsappUrl(orderMessage)} onClick={() => consult()} target="_blank" rel="noreferrer"><MessageCircle size={19} /> Consultar mi pedido <ArrowUpRight size={17} /></a><span className="cart-checkout-note"><ShieldCheck size={14} /> Esta consulta no realiza un pago ni reserva productos.</span></div></>}
+      {cart.length === 0 ? <div className="cart-empty"><div><ShoppingBag size={43} strokeWidth={1.3} /><Sparkles size={21} /></div><h3>Una aventura por llenar.</h3><p>Tu próxima colección comienza<br />{' '}con un pequeño favorito.</p><button className="button button-dark" onClick={() => { setCartOpen(false); scrollToSection('catalogo'); }}>Explorar la tienda <ArrowRight size={17} /></button></div> : <><div className="cart-items">{cart.map(item => { const product = products.find(p => p.id === item.productId); if (!product) return null; return <article className="cart-item" key={item.productId}><div className={`cart-item-art tone-${product.tone}`}><ProductArt product={product} /></div><div className="cart-item-info"><span>{product.categoryLabel}</span><h3>{product.name}</h3><strong>{formatPrice(product.price)} CLP</strong><div className="quantity-controls"><button aria-label={`Reducir cantidad de ${product.name}`} onClick={() => setCart(previous => updateQuantity(previous, product.id, item.quantity - 1, product.stock))}><Minus size={13} /></button><span aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span><button aria-label={`Aumentar cantidad de ${product.name}`} disabled={item.quantity >= product.stock} onClick={() => setCart(previous => updateQuantity(previous, product.id, item.quantity + 1, product.stock))}><Plus size={13} /></button></div></div><button className="remove-item icon-button" aria-label={`Eliminar ${product.name}`} onClick={() => setCart(previous => removeFromCart(previous, product.id))}><Trash2 size={17} /></button></article>; })}</div><div className="cart-summary"><div><span>{isDemo ? 'Subtotal de ejemplo' : 'Subtotal'}</span><strong>{formatPrice(subtotal)} CLP</strong></div><p>{isDemo ? 'Los precios y el stock son demostrativos. El valor final, la disponibilidad y el envío se confirman por WhatsApp.' : 'El valor final, la disponibilidad y el envío se confirman por WhatsApp.'}</p><a className="button button-dark" href={whatsappUrl(orderMessage)} onClick={() => consult()} target="_blank" rel="noreferrer"><MessageCircle size={19} /> Consultar mi pedido <ArrowUpRight size={17} /></a><span className="cart-checkout-note"><ShieldCheck size={14} /> Esta consulta no realiza un pago ni reserva productos.</span></div></>}
     </Dialog>}
   </>;
 }
