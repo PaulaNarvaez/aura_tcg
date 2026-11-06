@@ -103,7 +103,7 @@ export default function App() {
   const subtotal = getCartSubtotal(cart, products);
   const filtered = filterProducts(products, { category, query, sort });
   const activeCategory = categories.find(item => item.id === category) ?? categories[0];
-  const catalogTitles = { all: 'Todos los productos', cards: 'Cartas Pokémon', sealed: 'Sellados y ETB', plush: 'Peluches y figuras', accessories: 'Accesorios' };
+  const catalogTitles = { all: 'Todos los productos', cards: 'Cartas Pokémon', sealed: 'Sellados y ETB', accessories: 'Accesorios' };
   const departmentCounts = new Map(categories.map(item => [item.id, filterProducts(products, { category: item.id, query }).length]));
 
   useLayoutEffect(() => {
@@ -228,7 +228,7 @@ export default function App() {
       <form className="quick-search" role="search" aria-label="Búsqueda rápida de productos" onSubmit={submitQuickSearch}>
         <Search size={22} aria-hidden="true" />
         <label className="sr-only" htmlFor="quick-search">Buscar productos</label>
-        <input id="quick-search" type="search" value={draftQuery} onChange={event => setDraftQuery(event.target.value)} placeholder="Busca cartas, peluches, ETB…" />
+        <input id="quick-search" type="search" value={draftQuery} onChange={event => setDraftQuery(event.target.value)} placeholder="Busca cartas, ETB y accesorios…" />
         <button className="quick-search-button" type="submit">Buscar <ArrowRight size={18} /></button>
       </form>
       </div>
@@ -301,11 +301,26 @@ export default function App() {
       <section className="contact-banner container"><div><span className="eyebrow">TÚ PREGUNTA. NOSOTROS TE AYUDAMOS.</span><h2>¿Una duda? <span>¡Te leemos!</span><span className="chat-emoji" aria-hidden="true">💬</span></h2><p>Consulta por productos Pokémon o cuéntanos qué pieza 3D necesitas.</p></div><a className="button button-dark" href={whatsappUrl('¡Hola, Aura! Quisiera consultar por productos Pokémon o cotizar una pieza de impresión 3D a medida.')} target="_blank" rel="noreferrer"><MessageCircle size={19} /> Escríbenos por WhatsApp <ArrowUpRight size={18} /></a></section>
     </main>
 
-    <footer className="footer"><div className="container footer-top"><a className="brand" href="#inicio"><img className="brand-logo" src={imagePath('/images/aura-logo.png')} alt="Aura TCG & Print" /></a><p>Pokémon e impresión 3D.<br />{' '}Accesorios a tu medida.</p><div className="footer-links"><a href="#impresion-3d">Impresión 3D</a><a href="#catalogo">La tienda</a><a href="#nosotros">Nuestra historia</a><a href={whatsappUrl('¡Hola, Aura! Quisiera hacer una consulta.')} target="_blank" rel="noreferrer">Contacto <ArrowUpRight size={13} /></a></div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} Aura TCG & Print.<span className="footer-credit">Creado por <strong>paujnarvaez</strong> con <span className="credit-heart" role="img" aria-label="amor">♥</span></span></span><span className="footer-legal">Todos los derechos reservados sobre el contenido propio de Aura. Las marcas, personajes e imágenes de Pokémon pertenecen a sus respectivos titulares. Aura TCG & Print es una tienda independiente, sin afiliación oficial con Pokémon.</span></div></footer>
+    <footer className="footer">
+      <div className="container footer-top">
+        <div className="footer-brand"><a className="brand" href="#inicio"><img className="brand-logo" src={imagePath('/images/aura-logo.png')} alt="Aura TCG & Print" /></a><p>Pokémon e impresión 3D.<br />{' '}Accesorios a tu medida.</p></div>
+        <div className="footer-explore"><h3>Explora Aura</h3><nav className="footer-links" aria-label="Enlaces de la tienda"><a href="#impresion-3d">Impresión 3D</a><a href="#catalogo">La tienda</a><a href="#nosotros">Quiénes somos</a><a href={whatsappUrl('¡Hola, Aura! Quisiera hacer una consulta.')} target="_blank" rel="noreferrer">Contacto <ArrowUpRight size={16} aria-hidden="true" /></a></nav></div>
+        <section className="footer-postsale" id="postventa" aria-labelledby="postventa-title">
+          <h3 id="postventa-title">Postventa</h3>
+          <p>¿Necesitas ayuda con una compra? Escríbenos por WhatsApp y cuéntanos qué necesitas revisar.</p>
+          <div className="post-sale-links">
+            <a href={whatsappUrl('¡Hola, Aura! Necesito ayuda de postventa para consultar el estado de una compra.')} target="_blank" rel="noreferrer"><MessageCircle size={17} aria-hidden="true" /><span>Seguimiento de mi compra</span><ArrowUpRight size={16} aria-hidden="true" /></a>
+            <a href={whatsappUrl('¡Hola, Aura! Necesito ayuda de postventa con un producto que compré en la tienda.')} target="_blank" rel="noreferrer"><MessageCircle size={17} aria-hidden="true" /><span>Ayuda con mi producto</span><ArrowUpRight size={16} aria-hidden="true" /></a>
+            <a href={whatsappUrl('¡Hola, Aura! Quisiera consultar por postventa cómo gestionar un cambio o una devolución de un producto comprado en la tienda.')} target="_blank" rel="noreferrer"><MessageCircle size={17} aria-hidden="true" /><span>Cambios y devoluciones</span><ArrowUpRight size={16} aria-hidden="true" /></a>
+          </div>
+        </section>
+      </div>
+      <div className="container footer-bottom"><span>© {new Date().getFullYear()} Aura TCG & Print.<span className="footer-credit">Creado por <strong>paujnarvaez</strong> con <span className="credit-heart" role="img" aria-label="amor">♥</span></span></span></div>
+    </footer>
     <a className="floating-whatsapp" href={whatsappUrl('¡Hola, Aura! Quisiera consultar por Pokémon o impresión 3D a medida.')} target="_blank" rel="noreferrer" aria-label="Consultar precios por WhatsApp"><MessageCircle size={25} /><span>¿Hablamos?</span><span className="whatsapp-dot" /></a>
     <div className={toast ? 'toast visible' : 'toast'} role="status" aria-live="polite">{toast && <><span><Check size={17} /></span>{toast.message}<button className="icon-button" aria-label="Cerrar aviso" onClick={() => setToast(null)}><X size={16} /></button></>}</div>
 
-    {selected && <Dialog onClose={() => setSelectedId(null)} title="Un favorito de cerca" className="product-dialog"><div className={`detail-art tone-${selected.tone}`}><ProductArt product={selected} /></div><span className="eyebrow">{selected.categoryLabel}</span><h3>{selected.name}</h3><p>{selected.description}</p><div className="detail-price"><strong>{formatPrice(selected.price)} CLP</strong><span>{isDemo ? 'Precio de ejemplo · Consulta el valor vigente.' : selected.stock === 0 ? 'Agotado · Consulta por disponibilidad.' : 'Consulta la disponibilidad y el envío.'}</span></div>{isDemo && selected.category === 'plush' && <p className="image-disclaimer">Imagen del personaje como referencia; no representa una fotografía del peluche disponible.</p>}<div className="detail-actions"><button className="button button-dark" onClick={() => add(selected)} disabled={selected.stock === 0}><ShoppingBag size={18} /> Agregar al carrito</button><a className="button button-outline" href={whatsappUrl(`¡Hola, Aura! Quisiera consultar el precio y disponibilidad de ${selected.name}.`)} onClick={() => consult(selected.id)} target="_blank" rel="noreferrer"><MessageCircle size={18} /> Consultar precio</a></div></Dialog>}
+    {selected && <Dialog onClose={() => setSelectedId(null)} title="Un favorito de cerca" className="product-dialog"><div className={`detail-art tone-${selected.tone}`}><ProductArt product={selected} /></div><span className="eyebrow">{selected.categoryLabel}</span><h3>{selected.name}</h3><p>{selected.description}</p><div className="detail-price"><strong>{formatPrice(selected.price)} CLP</strong><span>{isDemo ? 'Precio de ejemplo · Consulta el valor vigente.' : selected.stock === 0 ? 'Agotado · Consulta por disponibilidad.' : 'Consulta la disponibilidad y el envío.'}</span></div><div className="detail-actions"><button className="button button-dark" onClick={() => add(selected)} disabled={selected.stock === 0}><ShoppingBag size={18} /> Agregar al carrito</button><a className="button button-outline" href={whatsappUrl(`¡Hola, Aura! Quisiera consultar el precio y disponibilidad de ${selected.name}.`)} onClick={() => consult(selected.id)} target="_blank" rel="noreferrer"><MessageCircle size={18} /> Consultar precio</a></div></Dialog>}
 
     {cartOpen && <Dialog onClose={() => setCartOpen(false)} title={`Tu colección (${count})`} className="cart-dialog">
       <p className="cart-note">Arma tu consulta. El carrito se vacía al abrir el pedido en WhatsApp.</p>

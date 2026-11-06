@@ -59,6 +59,17 @@ test('an empty response is a valid empty catalog and returned product order is p
   assert.deepEqual(items.map(({ id }) => id), ['second', 'first']);
 });
 
+test('retired plush rows from an older API stay hidden without blocking active products', async () => {
+  const retired = { ...row, id: 'legacy-plush', category: 'plush' };
+  const malformedRetired = { id: 'legacy-draft', category: 'plush', price: 'outdated' };
+  const items = await loadProducts({ url, fetchImpl: async () => response([
+    retired, row, malformedRetired, { ...row, id: 'active-card', category: 'cards' },
+  ]) });
+  assert.deepEqual(items.map(({ id }) => id), [row.id, 'active-card']);
+  assert.deepEqual(await loadProducts({ url, fetchImpl: async () => response([retired, malformedRetired]) }), []);
+  await assert.rejects(loadProducts({ url, fetchImpl: async () => response([retired, { ...row, category: 'unknown' }]) }), /No pudimos cargar/);
+});
+
 test('invalid products and duplicate ids reject the entire catalog rather than showing partial inventory', async () => {
   for (const invalid of [
     null, [], { ...row, id: '' }, { ...row, name: ' ' }, { ...row, category: 'all' },

@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from 'react';
-import { ArrowUpRight, MessageCircle } from 'lucide-react';
+import { Archive, ArrowUpRight, GalleryVerticalEnd, MessageCircle, PackageOpen } from 'lucide-react';
 import { store } from './site.config.js';
 
 const services = [
@@ -23,35 +23,17 @@ const services = [
   },
 ];
 
+const serviceIcons = {
+  'deck-box': PackageOpen,
+  organizer: Archive,
+  'card-stand': GalleryVerticalEnd,
+};
+
 function ServiceArt({ type }) {
-  return <svg className="custom-prints-art" viewBox="0 0 240 140" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-    {type === 'deck-box' && <>
-      <path d="M68 60 122 41 177 62 122 82Z" />
-      <path d="M68 60v48l54 21 55-21V62M122 82v47" />
-      <path d="m75 34 48-17 48 18-48 18ZM75 34v12l48 18 48-18V35M123 53v11" />
-      <path d="m84 67 25 10M84 76l25 10M137 92l22-8" />
-      <path d="M42 64v29m-4-25 4-4 4 4m-8 21 4 4 4-4" opacity=".45" />
-      <path d="M183 119h28m-24-4-4 4 4 4m20-8 4 4-4 4" opacity=".45" />
-    </>}
-    {type === 'organizer' && <>
-      <path d="m47 73 93-31 53 21-93 34Z" />
-      <path d="M47 73v33l53 20 93-33V63M100 97v29" />
-      <path d="m77 63 54 21m-23-32 54 22M77 63v16m31-27v16m54 6v30m-31-20v31" />
-      <path d="m59 75 18-6 12 5-18 6Zm50-17 21-7 11 5-20 7" />
-      <path d="M64 29h29m-25-4-4 4 4 4m21-8 4 4-4 4" opacity=".45" />
-      <path d="M209 66v31m-4-27 4-4 4 4m-8 23 4 4 4-4" opacity=".45" />
-    </>}
-    {type === 'card-stand' && <>
-      <path d="m65 108 67-22 48 16-66 25Z" />
-      <path d="M65 108v7l49 17 66-25v-5M114 127v5" />
-      <path d="m91 28 56-9 14 74-56 11Z" />
-      <path d="m98 35 43-7 11 58-43 8Z" opacity=".6" />
-      <path d="m94 111-2-13 24 7 26-10 2 10-28 11Z" />
-      <path d="m129 101 10 9M109 96l-1 10" />
-      <path d="M45 36v49m-4-45 4-4 4 4m-8 41 4 4 4-4" opacity=".45" />
-      <path d="M182 37h27m-23-4-4 4 4 4m19-8 4 4-4 4" opacity=".45" />
-    </>}
-  </svg>;
+  const Icon = serviceIcons[type];
+  return <span className="custom-prints-art" aria-hidden="true">
+    <Icon size={72} strokeWidth={1.6} focusable="false" />
+  </span>;
 }
 
 export default function CustomPrints() {

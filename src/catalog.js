@@ -2,24 +2,11 @@ export const categories = [
   { id: 'all', label: 'Ver todo' },
   { id: 'cards', label: 'Cartas' },
   { id: 'sealed', label: 'Sellados & ETB' },
-  { id: 'plush', label: 'Peluches' },
   { id: 'accessories', label: 'Accesorios' },
 ];
 
 // Catálogo y precios de demostración. No representan inventario disponible.
 export const products = [
-  {
-    id: 'pikachu-plush',
-    name: 'Peluche Pikachu',
-    category: 'plush',
-    categoryLabel: 'Peluches',
-    price: 24990,
-    image: '/images/pikachu.png',
-    badge: 'Favorito',
-    tone: 'yellow',
-    description: 'Un compañero de aventuras de 25 cm para darle energía a tu colección.',
-    stock: 12,
-  },
   {
     id: 'charizard-card',
     name: 'Charizard ex · Obsidian Flames',
@@ -45,17 +32,6 @@ export const products = [
     stock: 6,
   },
   {
-    id: 'eevee-plush',
-    name: 'Peluche Eevee',
-    category: 'plush',
-    categoryLabel: 'Peluches',
-    price: 22990,
-    image: '/images/eevee.png',
-    tone: 'peach',
-    description: 'Eevee en formato de peluche de 20 cm, listo para acompañar tu colección.',
-    stock: 8,
-  },
-  {
     id: 'booster-pack',
     name: 'Sobre Pokémon TCG',
     category: 'sealed',
@@ -76,18 +52,6 @@ export const products = [
     tone: 'yellow',
     description: 'Carta Pikachu #49 de Silver Tempest. Imagen de referencia; precio e inventario de demostración.',
     stock: 10,
-  },
-  {
-    id: 'gengar-plush',
-    name: 'Peluche Gengar',
-    category: 'plush',
-    categoryLabel: 'Peluches',
-    price: 26990,
-    image: '/images/gengar.png',
-    badge: 'Una sonrisa traviesa',
-    tone: 'purple',
-    description: 'El Pokémon fantasma en un peluche de 25 cm con su inconfundible sonrisa.',
-    stock: 7,
   },
   {
     id: 'pikachu-keyring',

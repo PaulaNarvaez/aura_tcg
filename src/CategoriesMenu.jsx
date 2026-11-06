@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowRight, Box, ChevronDown, Heart, Layers, LayoutGrid, Menu, Package, WalletCards, X } from 'lucide-react';
+import { ArrowRight, Box, ChevronDown, Layers, LayoutGrid, Menu, Package, WalletCards, X } from 'lucide-react';
 import { shopDepartments } from './ShopModules.jsx';
 import { whatsappUrl } from './site.config.js';
 
-const departmentIcons = { cards: Layers, sealed: Package, plush: Heart, accessories: WalletCards };
+const departmentIcons = { cards: Layers, sealed: Package, accessories: WalletCards };
 const validPreview = id => shopDepartments.some(department => department.id === id) ? id : 'all';
 
 export default function CategoriesMenu({ open, onOpenChange, activeCategory, products = [], isDemo, onSelectCategory, onSelectProduct, onNavigateSection }) {

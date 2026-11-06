@@ -18,6 +18,7 @@ export function createProductReader(connectionString) {
     SELECT id, name, category, price, image, badge, tone, description, stock
     FROM public.products
     WHERE is_published = true
+      AND category IN ('cards', 'sealed', 'accessories')
     ORDER BY sort_order, id
   `, [], { fetchOptions: { signal: AbortSignal.timeout(10_000) } });
 }

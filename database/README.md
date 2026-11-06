@@ -69,7 +69,7 @@ Puedes editar las filas desde la vista de tablas de Neon, si está disponible en
 | --- | --- |
 | `id` | Identificador generado automáticamente. Consérvalo al actualizar la ficha. |
 | `name` | Nombre del producto. |
-| `category` | `cards`, `sealed`, `plush` o `accessories`. |
+| `category` | `cards`, `sealed` o `accessories`. |
 | `price` | Precio real en CLP, como entero sin puntos: `18990`. |
 | `stock` | Unidades disponibles; `0` significa agotado. |
 | `image` | Ruta local `/images/foto.jpg`, una URL HTTPS pública o `NULL`. |
@@ -78,6 +78,8 @@ Puedes editar las filas desde la vista de tablas de Neon, si está disponible en
 | `tone` | `yellow`, `orange`, `purple`, `peach`, `blue` o `mint`. |
 | `sort_order` | Orden de aparición: primero los números menores. |
 | `is_published` | `true` para mostrar la ficha; `false` para mantenerla como borrador. |
+
+Los registros antiguos con categoría `plush` se mantienen como datos heredados, pero ya no se muestran en la tienda: la API consulta las categorías activas y la interfaz ignora esa categoría retirada. No necesitas borrar registros ni modificar una tabla existente para ocultarlos. El esquema conserva ese valor por compatibilidad.
 
 Las fotografías no se guardan como archivos dentro de PostgreSQL. Para una foto local, copia el archivo en `public/images/` con un nombre sencillo, por ejemplo `caja-mazo.jpg`, y guarda `/images/caja-mazo.jpg` en `image`. También puedes usar la URL HTTPS de una imagen alojada en otro servicio. Si modificas archivos de fotos locales, deberás volver a publicar la web.
 

@@ -27,6 +27,16 @@ const soldOut = {
   description: 'Producto sin existencias, disponible para consultar.',
 };
 
+// A legacy API may still return retired inventory; it must not break active products.
+const retiredPlush = {
+  ...card,
+  id: 'remote-retired-plush',
+  name: 'Peluche retirado de prueba',
+  category: 'plush',
+  stock: 9,
+  image: null,
+};
+
 async function seedCart(page, items) {
   await page.addInitScript(({ key, value }) => {
     window.localStorage.setItem(key, JSON.stringify(value));
@@ -53,6 +63,7 @@ test('waits for remote inventory before restoring the saved cart and preserves r
   const original = [
     { productId: card.id, quantity: 8 },
     { productId: 'retired-product', quantity: 1 },
+    { productId: retiredPlush.id, quantity: 3 },
     { productId: soldOut.id, quantity: 1 },
   ];
   await seedCart(page, original);
@@ -62,7 +73,7 @@ test('waits for remote inventory before restoring the saved cart and preserves r
   await context.route(api, async route => {
     requests.push(route.request());
     await responseGate;
-    await route.fulfill({ json: [card, soldOut] });
+    await route.fulfill({ json: [card, retiredPlush, soldOut] });
   });
   await page.goto('/');
   await expect(page.getByText('Cargando productos…', { exact: true })).toBeVisible();
@@ -71,6 +82,8 @@ test('waits for remote inventory before restoring the saved cart and preserves r
   release();
 
   await expect(page.locator('.product-card')).toHaveCount(2);
+  await expect(page.locator('.product-grid')).not.toContainText(retiredPlush.name);
+  await expect(page.locator('.shop-module[data-department="plush"]')).toHaveCount(0);
   await expect(page.locator('.catalog-label')).toHaveText('CATÁLOGO AURA');
   await expect(page.locator('#catalogo')).not.toContainText(/de ejemplo|catálogo de muestra/i);
   await expect.poll(() => storedCart(page)).toEqual([{ productId: card.id, quantity: 2 }]);

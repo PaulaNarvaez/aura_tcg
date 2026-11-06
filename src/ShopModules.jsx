@@ -4,13 +4,11 @@ import { imageUrl } from './catalog-source.js';
 export const shopDepartments = [
   { id: 'cards', label: 'Cartas', title: 'Cartas', description: 'Para jugar y coleccionar' },
   { id: 'sealed', label: 'Sellados y ETB', title: 'Sellados y ETB', description: 'Sobres y cajas selladas' },
-  { id: 'plush', label: 'Peluches', title: 'Peluches y figuras', description: 'Tus personajes Pokémon' },
   { id: 'accessories', label: 'Accesorios', title: 'Accesorios', description: 'Para guardar tus cartas' },
 ];
 
 function DepartmentArt({ id }) {
   if (id === 'cards') return <img src={imageUrl('/images/charizard-card.webp', import.meta.env.BASE_URL)} alt="" loading="lazy" />;
-  if (id === 'plush') return <img src={imageUrl('/images/eevee.png', import.meta.env.BASE_URL)} alt="" loading="lazy" />;
   if (id === 'sealed') return <span className="shop-module-package"><span className="pokeball"><span /></span><span>TCG</span></span>;
   if (id === 'accessories') return <WalletCards strokeWidth={1.3} />;
   return <Box strokeWidth={1.3} />;

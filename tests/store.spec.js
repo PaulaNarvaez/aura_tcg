@@ -107,6 +107,28 @@ async function exerciseQuickSearch(page, submitWithEnter = false) {
   await expect(page.locator('.product-card')).toHaveCount(products.length);
 }
 
+async function expectCurrentDepartments(page) {
+  await expect(page.locator('.shop-module')).toHaveCount(4);
+  await expect(page.locator('.shop-module[data-department="plush"]')).toHaveCount(0);
+  await expect(page.locator('.product-grid')).not.toContainText(/peluche/i);
+  await expect(page.locator('body')).not.toContainText(/peluches y figuras/i);
+}
+
+async function expectPostSaleContacts(page) {
+  const footer = page.locator('footer');
+  const postSale = footer.locator('#postventa');
+  await expect(postSale.getByRole('heading', { name: 'Postventa', exact: true })).toBeVisible();
+  const labels = ['Seguimiento de mi compra', 'Ayuda con mi producto', 'Cambios y devoluciones'];
+  for (const label of labels) {
+    const message = decodedWhatsapp(await postSale.getByRole('link', { name: label, exact: true }).getAttribute('href'));
+    expect(message).toMatch(/compra|pedido|producto|devoluci/i);
+  }
+  await expect(footer).toContainText(/© \d{4} Aura TCG & Print/);
+  await expect(footer.locator('.footer-credit strong')).toHaveText('paujnarvaez');
+  await expect(footer).not.toContainText('Todos los derechos reservados sobre el contenido propio de Aura.');
+  await expect(footer).not.toContainText('sin afiliación oficial con Pokémon');
+}
+
 function categoriesTrigger(page) {
   return page.getByRole('button', { name: /^(Abrir|Cerrar) menú de categorías$/ });
 }
@@ -152,6 +174,8 @@ test('desktop browsing, product details, persistent cart, and clearing a consult
   await stubWhatsapp(context);
   await page.goto('/');
   await expect(page).toHaveTitle(/Aura TCG & Print/);
+  await expectCurrentDepartments(page);
+  await expectPostSaleContacts(page);
   const logos = page.locator('img.brand-logo');
   await expect(logos).toHaveCount(2);
   for (const logo of await logos.all()) {
@@ -267,6 +291,8 @@ test('mobile categories, touch dismissal, cart, and page width', async ({ browse
   try {
     await stubWhatsapp(context);
     await page.goto('/');
+    await expectCurrentDepartments(page);
+    await expect(page.locator('#postventa').getByRole('heading', { name: 'Postventa', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Abrir menú', exact: true })).toHaveCount(0);
     let panel = await openCategories(page);
     await closeCategoriesOutside(page, true);
@@ -356,8 +382,9 @@ test('category mega menu previews without filtering, supports keyboard dismissal
   await expect(menuCategories.getByRole('button', { name: 'Ver toda la tienda', exact: true })).toBeFocused();
   await menuCategories.getByRole('button', { name: 'Cartas', exact: true }).hover();
   await expect(panel.getByRole('heading', { name: 'Cartas', exact: true })).toBeVisible();
-  await menuCategories.getByRole('button', { name: 'Peluches', exact: true }).focus();
-  await expect(panel.getByRole('heading', { name: 'Peluches y figuras', exact: true })).toBeVisible();
+  await expect(menuCategories.getByRole('button', { name: 'Peluches', exact: true })).toHaveCount(0);
+  await menuCategories.getByRole('button', { name: 'Accesorios', exact: true }).focus();
+  await expect(panel.getByRole('heading', { name: 'Accesorios', exact: true })).toBeVisible();
   await expect(page.locator('.product-grid .product-name')).toHaveText(products.map(product => product.name));
   expect(Math.abs(await page.evaluate(() => window.scrollY) - origin)).toBeLessThanOrEqual(1);
   await page.keyboard.press('Escape');
@@ -372,8 +399,8 @@ test('category mega menu previews without filtering, supports keyboard dismissal
   await expect(page.locator('.product-grid .product-name')).toHaveText(products.filter(product => product.category === 'cards').map(product => product.name));
 
   if (products.length > 0) {
-    const product = products.find(item => item.category === 'plush') ?? products[0];
-    const labels = { cards: 'Cartas', sealed: 'Sellados y ETB', plush: 'Peluches', accessories: 'Accesorios' };
+    const product = products.find(item => item.category === 'accessories') ?? products[0];
+    const labels = { cards: 'Cartas', sealed: 'Sellados y ETB', accessories: 'Accesorios' };
     visiblePanel = await openCategories(page);
     await visiblePanel.getByRole('navigation', { name: 'Categorías de la tienda', exact: true }).getByRole('button', { name: labels[product.category], exact: true }).hover();
     await visiblePanel.getByRole('button', { name: product.name, exact: true }).click();
@@ -454,9 +481,9 @@ test('custom 3D services select the requested piece and send its details as one 
   const type = form.getByRole('combobox', { name: 'Tipo de pieza', exact: true });
   const idea = form.getByRole('textbox', { name: 'Tu idea (obligatorio)', exact: true });
   await expect(cards).toHaveCount(3);
-  // Until real product photos are supplied, the services use illustrations.
+  // Services use the same Lucide icon set while product photos are prepared.
   await expect(cards.locator('img')).toHaveCount(0);
-  await expect(cards.locator('svg.custom-prints-art')).toHaveCount(3);
+  await expect(cards.locator('.custom-prints-art > svg')).toHaveCount(3);
   for (const [id, name] of [['deck-box', 'Cajas para mazos'], ['organizer', 'Organizadores'], ['card-stand', 'Soportes para cartas']]) {
     const card = cards.filter({ has: page.getByRole('heading', { name, exact: true }) });
     await card.click();
@@ -603,7 +630,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     await page.goto('/');
     await page.evaluate(() => document.fonts.ready);
     await expect(page.getByRole('searchbox')).toHaveCount(1);
-    await expect(page.locator('.shop-module')).toHaveCount(5);
+    await expectCurrentDepartments(page);
     const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(pageWidth).toBeLessThanOrEqual(width);
     for (const module of await page.locator('.shop-module').all()) {
@@ -632,7 +659,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       const count = category.id === 'all' ? products.length : products.filter(product => product.category === category.id).length;
       await expect(filter.locator('.department-count')).toHaveText(String(count));
     }
-    const selectedId = { 320: 'cards', 390: 'sealed', 768: 'plush', 1024: 'accessories' }[width];
+    const selectedId = { 320: 'cards', 390: 'sealed', 768: 'accessories', 1024: 'accessories' }[width];
     if (selectedId) {
       await page.locator(`.shop-module[data-department="${selectedId}"]`).click();
       const category = categories.find(item => item.id === selectedId);
@@ -662,7 +689,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     expect(panelBounds.y).toBeGreaterThanOrEqual(0);
     expect(panelBounds.y + panelBounds.height).toBeLessThanOrEqual(900);
     const departments = panel.getByRole('navigation', { name: 'Categorías de la tienda', exact: true });
-    const departmentChoice = { 320: ['sealed', 'Sellados y ETB'], 390: ['plush', 'Peluches'], 768: ['accessories', 'Accesorios'], 1024: ['cards', 'Cartas'], 1440: ['all', 'Ver toda la tienda'] }[width];
+    const departmentChoice = { 320: ['sealed', 'Sellados y ETB'], 390: ['cards', 'Cartas'], 768: ['accessories', 'Accesorios'], 1024: ['cards', 'Cartas'], 1440: ['all', 'Ver toda la tienda'] }[width];
     await departments.getByRole('button', { name: departmentChoice[1], exact: true }).click();
     await expect(panel).toHaveCount(0);
     const departmentProducts = departmentChoice[0] === 'all' ? products : products.filter(product => product.category === departmentChoice[0]);
@@ -696,6 +723,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     await sidebar.getByRole('button', { name: categories.find(item => item.id === 'all').label, exact: true }).click();
     const section = page.locator('#impresion-3d');
     await expect(section.locator('.custom-prints-card')).toHaveCount(3);
+    const serviceIconSizes = [];
     for (const card of await section.locator('.custom-prints-card').all()) {
       const bounds = await card.boundingBox();
       const art = await card.locator('.custom-prints-art').boundingBox();
@@ -703,7 +731,20 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       expect(bounds.x).toBeGreaterThanOrEqual(0);
       expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
       expect(overlaps(art, copy)).toBe(false);
+      const icon = card.locator('.custom-prints-art > svg');
+      await expect(icon).toHaveAttribute('viewBox', '0 0 24 24');
+      const iconBounds = await icon.boundingBox();
+      expect(iconBounds.width).toBeGreaterThan(0);
+      expect(Math.abs(iconBounds.width - iconBounds.height)).toBeLessThanOrEqual(1);
+      expect(iconBounds.x).toBeGreaterThanOrEqual(art.x);
+      expect(iconBounds.x + iconBounds.width).toBeLessThanOrEqual(art.x + art.width);
+      expect(iconBounds.y).toBeGreaterThanOrEqual(art.y);
+      expect(iconBounds.y + iconBounds.height).toBeLessThanOrEqual(art.y + art.height);
+      expect(Math.abs(iconBounds.x + iconBounds.width / 2 - (art.x + art.width / 2))).toBeLessThanOrEqual(1);
+      expect(Math.abs(iconBounds.y + iconBounds.height / 2 - (art.y + art.height / 2))).toBeLessThanOrEqual(1);
+      serviceIconSizes.push(iconBounds.width);
     }
+    expect(Math.max(...serviceIconSizes) - Math.min(...serviceIconSizes)).toBeLessThanOrEqual(1);
     const form = section.locator('form');
     const formBounds = await form.boundingBox();
     const introBounds = await section.locator('.custom-prints-form-intro').boundingBox();

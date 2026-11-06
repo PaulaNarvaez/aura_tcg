@@ -11,7 +11,7 @@ Adjunta las fotos en este chat y acompaña cada producto con esta ficha:
 ```text
 Acción: agregar / actualizar / retirar
 Nombre del producto:
-Categoría: cartas / sellados / peluches y figuras / accesorios
+Categoría: cartas / sellados / accesorios
 Precio de venta en CLP:
 Unidades disponibles:
 Descripción:
@@ -25,10 +25,9 @@ Agrega los detalles que correspondan:
 
 - **Cartas:** expansión, número de carta, idioma y estado de conservación. Una foto del reverso ayuda a describir el estado.
 - **Sellados:** edición, idioma, contenido y estado del sello.
-- **Peluches y figuras:** tamaño y características del artículo.
 - **Accesorios:** medidas, capacidad o compatibilidad, si corresponde.
 
-Para una actualización, basta con decir qué producto cambia y cuál es el nuevo dato. Por ejemplo: «Peluche Eevee: precio $18.990, quedan 3 unidades y reemplaza la foto por la que adjunto».
+Para una actualización, basta con decir qué producto cambia y cuál es el nuevo dato. Por ejemplo, con datos ficticios: «Llavero Pikachu: precio $6.990, quedan 3 unidades y reemplaza la foto por la que adjunto».
 
 Con esa información puedo incorporar las fotos, actualizar las fichas, revisar cómo se ven en móvil y escritorio y subir los cambios a GitHub con PaulaNarvaez como autora. Los títulos de los commits mantienen la hora y fecha reales de Chile. La sección 9 explica la publicación con servidor para Neon y la opción estática de muestra en GitHub Pages.
 
@@ -47,7 +46,8 @@ Si un dato está por definir, indícalo. Los precios y existencias de ejemplo no
 | Servidor que consulta los productos publicados | `server/` |
 | Número de WhatsApp | `src/site.config.js` |
 | Portada, textos del catálogo, Quiénes somos y pie de página | `src/App.jsx` |
-| Servicios y formulario de cotización de impresión 3D a medida | `src/CustomPrints.jsx` |
+| Servicios, iconos y formulario de cotización de impresión 3D a medida | `src/CustomPrints.jsx` |
+| Enlaces de postventa del pie de página | `src/App.jsx` |
 | Colores, tamaños, tarjetas, fondo y animaciones | `src/styles.css` |
 | Logo de Aura e icono de la pestaña | Logo en `public/images/`; icono en `public/favicon.svg` |
 | Título de la pestaña y descripción para buscadores | `index.html` |
@@ -60,10 +60,10 @@ Puedes abrir la carpeta del proyecto en Visual Studio Code y usar **Ctrl + Shift
 
 Los comandos de esta sección permiten abrir la muestra sin configurar la conexión. Si ya activaste Neon, necesitas también `npm run dev:api` en otra terminal, como explica la [guía de arranque con base de datos](database/README.md).
 
-En **Símbolo del sistema (CMD)** de Windows, entra en la carpeta del proyecto. Si ya estás dentro de `pokenova_tcg`, no necesitas repetir este paso:
+En **Símbolo del sistema (CMD)** de Windows, entra en la carpeta del proyecto. Si ya estás dentro de `aura_tcg`, no necesitas repetir este paso:
 
 ```bat
-cd /d "%USERPROFILE%\Downloads\pokenova_tcg"
+cd /d "%USERPROFILE%\Downloads\aura_tcg"
 ```
 
 La carpeta debe contener `package.json`. Si la descargaste en otro lugar o el ZIP creó una carpeta adicional, ajusta la ruta hasta llegar a ese archivo.
@@ -148,10 +148,9 @@ Este ejemplo utiliza un precio y una cantidad ficticios. Reemplázalos y copia p
 | --- | --- | --- |
 | Cartas individuales | `cards` | `Cartas` |
 | Sobres, ETB, cajas y colecciones selladas | `sealed` | `Sellados & ETB` |
-| Peluches y figuras | `plush` | `Peluches` |
 | Fundas, carpetas, llaveros y otros accesorios | `accessories` | `Accesorios` |
 
-`all` es el filtro «Todo el universo»; no lo uses como categoría de un producto.
+`all` es el filtro «Ver todo»; no lo uses como categoría de un producto.
 
 Los productos se muestran inicialmente en el orden de la lista. Mueve un bloque más arriba para que aparezca antes en «Destacados».
 
@@ -159,20 +158,20 @@ Para crear una categoría nueva, dime su nombre y qué productos incluirá. Adem
 
 ### Cambiar una foto o un precio
 
-Para reemplazar la foto de Peluche Eevee, por ejemplo:
+Para reemplazar la foto de Llavero Pikachu, por ejemplo:
 
-1. Copia tu foto a `public/images/peluche-eevee-real.jpg`.
-2. Busca el bloque con `id: 'eevee-plush'`.
+1. Copia tu foto a `public/images/llavero-pikachu-real.jpg`.
+2. Busca el bloque con `id: 'pikachu-keyring'`.
 3. Cambia la línea de la imagen:
 
 ```js
-image: '/images/peluche-eevee-real.jpg',
+image: '/images/llavero-pikachu-real.jpg',
 ```
 
 Para cambiar el precio o las unidades, modifica únicamente sus valores en ese mismo bloque:
 
 ```js
-price: 18990,
+price: 6990,
 stock: 3,
 ```
 
@@ -192,7 +191,7 @@ Usa preferentemente fotos JPG o PNG, nítidas y con el producto completo. Una im
 Nombra los archivos en minúsculas, sin espacios ni tildes. Por ejemplo:
 
 ```text
-peluche-eevee-real.jpg
+llavero-pikachu-real.jpg
 charizard-ex-frente.jpg
 etb-151-ingles.jpg
 ```
@@ -200,13 +199,13 @@ etb-151-ingles.jpg
 La relación entre carpeta y ruta es:
 
 ```text
-Archivo: public/images/peluche-eevee-real.jpg
-En el catálogo: image: '/images/peluche-eevee-real.jpg'
+Archivo: public/images/llavero-pikachu-real.jpg
+En el catálogo: image: '/images/llavero-pikachu-real.jpg'
 ```
 
 Respeta exactamente el nombre y la extensión del archivo: GitHub Pages distingue mayúsculas de minúsculas. En el campo `image`, no agregues `public/` ni una ruta de tu computador.
 
-Usa un archivo nuevo para cada foto real de producto. Algunas imágenes actuales, como `pikachu.png`, se comparten entre varios productos y recursos de la página; reemplazarlas cambiaría todos esos lugares.
+Usa un archivo nuevo para cada foto real de producto. Si una imagen se comparte entre varias fichas o recursos de la página, reemplazar ese archivo cambiará todos los lugares que lo utilizan.
 
 Cada producto muestra una foto principal. Si envías varias, indica cuál quieres destacar; una galería de fotos requeriría una ampliación de la ficha. Si dejas `image: null`, aparece una ilustración conceptual en lugar de una fotografía.
 
@@ -226,7 +225,7 @@ Los mensajes preparados para consultas de productos y pedidos están en `src/App
 
 ### Impresión 3D a medida
 
-Las opciones de cajas para mazos, organizadores y soportes están en `src/CustomPrints.jsx`. Allí puedes editar sus explicaciones y el mensaje de cotización.
+Las opciones de cajas para mazos, organizadores y soportes están en `src/CustomPrints.jsx`. Allí puedes editar sus explicaciones y el mensaje de cotización. Sus iconos decorativos de Lucide mantienen el mismo tamaño y trazo; no son fotografías de productos.
 
 El formulario permite elegir el formato de la colección e indicar medidas en milímetros, color e idea del diseño. Las medidas y el color son opcionales; el cliente puede consultar antes de tenerlos definidos. El mensaje se prepara para WhatsApp y el cliente debe enviarlo allí.
 
@@ -234,9 +233,15 @@ Estos servicios no se agregan al carrito ni tienen un precio fijo en el catálog
 
 ### Portada, Quiénes somos y pie de página
 
-Busca el texto que quieres cambiar en `src/App.jsx`. Puedes reemplazar las palabras conservando las etiquetas y la estructura del archivo. Por ejemplo, el texto «Hecho con ❤️» está en el pie de página de ese archivo.
+Busca el texto que quieres cambiar en `src/App.jsx`. Puedes reemplazar las palabras conservando las etiquetas y la estructura del archivo. Por ejemplo, el crédito «Creado por paujnarvaez con ♥» está en el pie de página de ese archivo.
 
 El nombre visible de la marca está escrito en `src/App.jsx`. Cambiar únicamente `name` en `src/site.config.js` no lo reemplaza en los textos ni en los mensajes.
+
+### Postventa
+
+La sección **Postventa** del pie de página está en `src/App.jsx`. Sus enlaces preparan consultas por WhatsApp para **Seguimiento de mi compra**, **Ayuda con mi producto** y **Cambios y devoluciones**. El cliente puede indicar qué compró y explicar su consulta en la conversación.
+
+Puedes editar las etiquetas y los mensajes de esos enlaces. Son vías de atención: no establecen plazos, condiciones de devolución ni garantías. El pie conserva el copyright y el crédito de creación.
 
 ### Título de pestaña y logo
 
@@ -263,7 +268,7 @@ Los estilos están en `src/styles.css`. Los colores principales se declaran al c
 
 El fondo animado utiliza `.animated-background` y `.background-orb` para los colores suaves, y `.background-glint` para los brillitos. Su posición, tamaño y ritmo se definen en `backgroundGlints`, al comienzo de `src/App.jsx`; sus formas y animaciones están en `src/styles.css`. Las reglas al final para `prefers-reduced-motion` respetan la preferencia de quienes necesitan menos movimiento.
 
-Los cinco módulos de categorías usan `.shop-module-grid` y `.shop-module`, con espacios para imagen y texto. Para modificar tamaños o columnas, conserva las reglas de móvil y tablet y revisa el resultado en distintos anchos.
+Los cuatro módulos de categorías usan `.shop-module-grid` y `.shop-module`, con espacios para imagen y texto. Para modificar tamaños o columnas, conserva las reglas de móvil y tablet y revisa el resultado en distintos anchos.
 
 La barra del encabezado reúne los departamentos y un único buscador dentro del menú desplegable de categorías, definido en `src/CategoriesMenu.jsx`. No hay una barra de departamentos adicional. Escribir en el campo prepara la consulta; los productos cambian al pulsar **Buscar** o **Enter**. Los filtros de categoría y la ordenación están junto a los productos, y conservan la búsqueda aplicada.
 

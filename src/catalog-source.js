@@ -93,7 +93,9 @@ export async function loadProducts({ url, signal, fetchImpl = globalThis.fetch }
     const rows = await response.json();
     checkAbort(signal);
     if (!Array.isArray(rows)) throw catalogError();
-    const items = rows.map(normalizeProduct);
+    // Older API deployments may still return this retired department.
+    // Hide it without rejecting the active catalog or deleting stored records.
+    const items = rows.filter(row => row?.category !== 'plush').map(normalizeProduct);
     if (new Set(items.map(({ id }) => id)).size !== items.length) throw catalogError();
     return items;
   } catch (error) {
